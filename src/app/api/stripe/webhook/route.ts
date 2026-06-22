@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   try {
     const { default: Stripe } = await import("stripe");
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2025-06-16.acacia" as any,
+      apiVersion: "2025-06-16.acacia" as unknown as never,
     });
 
     const body = await request.text();
@@ -51,10 +51,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (err: any) {
-    console.error("Webhook error:", err.message);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("Webhook error:", errorMessage);
     return NextResponse.json(
-      { error: `Webhook verification failed: ${err.message}` },
+      { error: `Webhook verification failed: ${errorMessage}` },
       { status: 400 }
     );
   }

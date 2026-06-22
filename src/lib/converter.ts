@@ -232,7 +232,7 @@ export function convertExcelToAsycudaXml(
   let workbook: XLSX.WorkBook;
   try {
     workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });
-  } catch (e) {
+  } catch {
     return {
       success: false,
       xml: null,

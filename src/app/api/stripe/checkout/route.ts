@@ -22,7 +22,7 @@ async function getStripe() {
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
   return new Stripe(key, {
-    apiVersion: "2025-06-16.acacia" as any,
+    apiVersion: "2025-06-16.acacia" as unknown as never,
   });
 }
 
@@ -63,8 +63,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
-    console.error("Stripe checkout error:", err.message);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("Stripe checkout error:", errorMessage);
     return NextResponse.json(
       { error: "Failed to create checkout session." },
       { status: 500 }

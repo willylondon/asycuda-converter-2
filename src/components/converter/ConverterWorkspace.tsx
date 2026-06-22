@@ -35,33 +35,7 @@ export function ConverterWorkspace() {
     setStats(null);
   };
 
-  const handleFileSelect = useCallback((selectedFile: File) => {
-    setError(null);
-
-    const ext = "." + selectedFile.name.split(".").pop()?.toLowerCase();
-    if (![".xlsx", ".xls"].includes(ext)) {
-      setError("Unsupported file format. Please upload a .xlsx or .xls file.");
-      return;
-    }
-
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      setError(
-        `File too large. Maximum is 10MB. Your file is ${(selectedFile.size / 1024 / 1024).toFixed(1)}MB.`
-      );
-      return;
-    }
-
-    if (selectedFile.size === 0) {
-      setError("File is empty.");
-      return;
-    }
-
-    setFile(selectedFile);
-    setStep("uploading");
-    void convertFile(selectedFile);
-  }, []);
-
-  const convertFile = async (selectedFile: File) => {
+  const convertFile = useCallback(async (selectedFile: File) => {
     setStep("validating");
 
     try {
@@ -88,7 +62,33 @@ export function ConverterWorkspace() {
       setError("Network error: Could not reach the server. Please check your connection and try again.");
       setStep("upload");
     }
-  };
+  }, []);
+
+  const handleFileSelect = useCallback((selectedFile: File) => {
+    setError(null);
+
+    const ext = "." + selectedFile.name.split(".").pop()?.toLowerCase();
+    if (![".xlsx", ".xls"].includes(ext)) {
+      setError("Unsupported file format. Please upload a .xlsx or .xls file.");
+      return;
+    }
+
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError(
+        `File too large. Maximum is 10MB. Your file is ${(selectedFile.size / 1024 / 1024).toFixed(1)}MB.`
+      );
+      return;
+    }
+
+    if (selectedFile.size === 0) {
+      setError("File is empty.");
+      return;
+    }
+
+    setFile(selectedFile);
+    setStep("uploading");
+    void convertFile(selectedFile);
+  }, [convertFile]);
 
   const handleDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {

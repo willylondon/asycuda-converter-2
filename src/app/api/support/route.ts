@@ -13,7 +13,6 @@ import { supportSchema, type SupportFieldError } from "@/lib/support";
 type SupportRateLimitEntry = { count: number; resetAt: number };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __supportRateLimit: Map<string, SupportRateLimitEntry> | undefined;
 }
 
