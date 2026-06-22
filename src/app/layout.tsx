@@ -35,9 +35,9 @@ export const metadata: Metadata = {
     "customs declaration",
     "XML generator",
   ],
-  authors: [{ name: "IGonics" }],
-  creator: "IGonics",
-  publisher: "IGonics",
+  authors: [{ name: "Willy London" }],
+  creator: "Willy London",
+  publisher: "Willy London",
   openGraph: {
     type: "website",
     locale: "en_US",

@@ -46,7 +46,7 @@ const BENEFITS = [
   {
     icon: Shield,
     title: "Customs Compliant",
-    description: "Output XML follows ASYCUDA World specifications exactly. No rejections, no resubmissions.",
+    description: "Output XML follows ASYCUDA World specifications. Built-in validation catches issues before submission, reducing customs rejections.",
   },
   {
     icon: FileSpreadsheet,

@@ -47,7 +47,6 @@ export default function PricingPage() {
           features={[
             "10 conversions",
             "Priority processing",
-            "Bulk file support",
             "Priority email support",
             "Save 20% vs single",
           ]}

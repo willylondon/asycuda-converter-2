@@ -9,128 +9,104 @@ import {
   Download,
   Loader2,
   ArrowLeft,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import type { ConversionResult, ValidationIssue } from "@/lib/converter";
 
-type Step = "upload" | "validating" | "validated" | "converting" | "complete";
-type ValidationIssue = {
-  type: "error" | "warning";
-  message: string;
-  row?: number;
-  column?: string;
-};
+type Step = "upload" | "uploading" | "validating" | "validated" | "converting" | "complete" | "failed";
 
 export default function ConverterPage() {
   const [step, setStep] = useState<Step>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
+  const [warnings, setWarnings] = useState<ValidationIssue[]>([]);
   const [xmlContent, setXmlContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<ConversionResult["stats"]>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback(
-    async (selectedFile: File) => {
-      setError(null);
+  const reset = () => {
+    setStep("upload");
+    setFile(null);
+    setIssues([]);
+    setWarnings([]);
+    setXmlContent(null);
+    setError(null);
+    setStats(null);
+  };
 
-      // MIME validation
-      const validMimes = [
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/vnd.ms-excel",
-      ];
+  const handleFileSelect = useCallback((selectedFile: File) => {
+    setError(null);
 
-      const validExtensions = [".xlsx", ".xls"];
-      const ext = "." + selectedFile.name.split(".").pop()?.toLowerCase();
+    // Client-side metadata check
+    const ext = "." + selectedFile.name.split(".").pop()?.toLowerCase();
+    if (![".xlsx", ".xls"].includes(ext)) {
+      setError("Unsupported file format. Please upload a .xlsx or .xls file.");
+      return;
+    }
 
-      if (
-        !validMimes.includes(selectedFile.type) &&
-        !validExtensions.includes(ext)
-      ) {
-        setError(
-          `This file type is not supported. Please upload a .xlsx or .xls Excel file.`
-        );
-        return;
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError(
+        `File too large. Maximum is 10MB. Your file is ${(selectedFile.size / 1024 / 1024).toFixed(1)}MB.`
+      );
+      return;
+    }
+
+    if (selectedFile.size === 0) {
+      setError("File is empty.");
+      return;
+    }
+
+    setFile(selectedFile);
+    setStep("uploading");
+
+    // Send to server API
+    convertFile(selectedFile);
+  }, []);
+
+  const convertFile = async (selectedFile: File) => {
+    setStep("validating");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const response = await fetch("/api/convert", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result: ConversionResult = await response.json();
+
+      if (result.success && result.xml) {
+        setXmlContent(result.xml);
+        setIssues([]);
+        setWarnings(result.warnings || []);
+        setStats(result.stats);
+        setStep("complete");
+      } else {
+        setIssues(result.errors || []);
+        setWarnings(result.warnings || []);
+        setStats(result.stats);
+        setStep("failed");
       }
-
-      // Size check (10MB)
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        setError(
-          `File is too large. Maximum file size is 10MB. Your file is ${(
-            selectedFile.size /
-            1024 /
-            1024
-          ).toFixed(1)}MB.`
-        );
-        return;
-      }
-
-      setFile(selectedFile);
-      setStep("validating");
-
-      // Simulate validation (in production, this would use xlsx on server)
-      await new Promise((r) => setTimeout(r, 1500));
-
-      const validationIssues: ValidationIssue[] = [];
-
-      // Check filename for common patterns
-      if (
-        !selectedFile.name.toLowerCase().includes("manifest") &&
-        !selectedFile.name.toLowerCase().includes("delivery")
-      ) {
-        validationIssues.push({
-          type: "warning",
-          message:
-            'File name does not contain "manifest" or "delivery". Make sure this is the correct file.',
-        });
-      }
-
-      setIssues(validationIssues);
-      setStep("validated");
-    },
-    []
-  );
+    } catch (err) {
+      setError(
+        "Network error: Could not reach the server. Please check your connection and try again."
+      );
+      setStep("upload");
+    }
+  };
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile) handleFile(droppedFile);
+      if (droppedFile) handleFileSelect(droppedFile);
     },
-    [handleFile]
+    [handleFileSelect]
   );
-
-  const handleConvert = async () => {
-    setStep("converting");
-    await new Promise((r) => setTimeout(r, 2500));
-
-    // Generate sample XML (in production, this uses server-side xlsx + XML builder)
-    const sampleXml = `<?xml version="1.0" encoding="UTF-8"?>
-<ASYCUDA xmlns="http://www.wcoomd.org/ASYCUDA">
-  <Manifest>
-    <Header>
-      <ManifestNumber>MAN-${Date.now()}</ManifestNumber>
-      <Date>${new Date().toISOString().split("T")[0]}</Date>
-      <Carrier>Sample Carrier</Carrier>
-      <Vessel>Sample Vessel</Vessel>
-      <VoyageNumber>VOY-${Math.floor(Math.random() * 999) + 1}</VoyageNumber>
-    </Header>
-    <Consignments>
-      <Consignment>
-        <ContainerNumber>CONT-1234567</ContainerNumber>
-        <BillOfLading>BL-987654321</BillOfLading>
-        <Consignee>Sample Consignee Ltd.</Consignee>
-        <Description>General Cargo - Electronics</Description>
-        <GrossWeight unit="KG">12500</GrossWeight>
-        <PackageCount>42</PackageCount>
-        <PortOfOrigin>KIN</PortOfOrigin>
-        <PortOfDestination>USMIA</PortOfDestination>
-      </Consignment>
-    </Consignments>
-  </Manifest>
-</ASYCUDA>`;
-
-    setXmlContent(sampleXml);
-    setStep("complete");
-  };
 
   const handleDownload = () => {
     if (!xmlContent || !file) return;
@@ -143,13 +119,7 @@ export default function ConverterPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleReset = () => {
-    setStep("upload");
-    setFile(null);
-    setIssues([]);
-    setXmlContent(null);
-    setError(null);
-  };
+  // ─── Render ───────────────────────────────────────────────────
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -168,52 +138,32 @@ export default function ConverterPage() {
         Convert Your Excel Manifest
       </h1>
       <p className="mt-2 text-lg text-text-muted">
-        Upload your delivery manifest, validate the structure, and download your
-        ASYCUDA-compliant XML.
+        Upload your delivery manifest, validate against ASYCUDA requirements, and download compliant XML.
       </p>
 
-      {/* Download Samples */}
-      <div className="mt-6 flex flex-wrap gap-3">
-        <a
-          href="/samples/sample-manifest.xlsx"
-          className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-hover hover:border-accent/30 transition-colors min-h-[44px]"
-        >
-          <FileSpreadsheet className="h-4 w-4 text-accent" />
-          Download Sample Excel
-        </a>
-      </div>
-
       {/* Upload Area */}
-      {(step === "upload" || step === "validating") && (
+      {(step === "upload" || step === "uploading" || step === "validating") && (
         <div className="mt-8">
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            onClick={() => fileInputRef.current?.click()}
-            className={`relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 sm:p-16 cursor-pointer transition-all min-h-[280px] ${
-              error
-                ? "border-danger bg-danger/5"
-                : "border-border hover:border-accent/50 hover:bg-accent/[0.02]"
+            onClick={() => step === "upload" && fileInputRef.current?.click()}
+            className={`relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 sm:p-16 transition-all min-h-[280px] ${
+              step === "upload"
+                ? "cursor-pointer border-border hover:border-accent/50 hover:bg-accent/[0.02]"
+                : "border-accent/30 bg-accent/[0.02]"
             }`}
           >
             <input
               ref={fileInputRef}
               type="file"
               accept=".xlsx,.xls"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
               className="hidden"
               aria-label="Upload Excel file"
             />
 
-            {step === "validating" ? (
-              <>
-                <Loader2 className="h-16 w-16 text-accent animate-spin mb-4" />
-                <p className="text-lg font-semibold text-text">
-                  Validating your file...
-                </p>
-                <p className="text-sm text-text-muted mt-2">{file?.name}</p>
-              </>
-            ) : (
+            {step === "upload" ? (
               <>
                 <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
                   <Upload className="h-10 w-10 text-accent" />
@@ -225,26 +175,31 @@ export default function ConverterPage() {
                   or click to browse — .xlsx and .xls up to 10MB
                 </p>
               </>
+            ) : (
+              <>
+                <Loader2 className="h-16 w-16 text-accent animate-spin mb-4" />
+                <p className="text-lg font-semibold text-text">
+                  {step === "uploading"
+                    ? "Uploading..."
+                    : "Validating your file..."}
+                </p>
+                <p className="text-sm text-text-muted mt-2">{file?.name}</p>
+              </>
             )}
           </div>
 
           {error && (
-            <div
-              role="alert"
-              className="mt-4 flex items-start gap-3 rounded-xl bg-danger/5 border border-danger/20 p-4"
-            >
+            <div role="alert" className="mt-4 flex items-start gap-3 rounded-xl bg-danger/5 border border-danger/20 p-4">
               <AlertTriangle className="h-5 w-5 text-danger flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-danger text-sm">
-                  Upload Error
-                </p>
+                <p className="font-semibold text-danger text-sm">Upload Error</p>
                 <p className="text-sm text-text-secondary mt-1">{error}</p>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setError(null);
                   }}
-                  className="mt-2 text-sm font-medium text-accent hover:text-accent-light transition-colors"
+                  className="mt-2 text-sm font-medium text-accent hover:text-accent-light"
                 >
                   Try again
                 </button>
@@ -254,87 +209,82 @@ export default function ConverterPage() {
         </div>
       )}
 
-      {/* Validation Report */}
-      {step === "validated" && (
+      {/* ─── FAILED STATE ─── */}
+      {step === "failed" && (
         <div className="mt-8 space-y-6">
-          <div className="flex items-start gap-4 rounded-2xl bg-surface border border-border p-6">
-            <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
-              <CheckCircle className="h-6 w-6 text-success" />
+          <div className="flex items-start gap-4 rounded-2xl bg-danger/5 border border-danger/20 p-6">
+            <div className="w-12 h-12 rounded-xl bg-danger/10 flex items-center justify-center flex-shrink-0">
+              <XCircle className="h-6 w-6 text-danger" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-text">
-                Validation Report
-              </h2>
+              <h2 className="text-xl font-semibold text-text">Conversion Failed</h2>
               <p className="text-sm text-text-muted mt-1">
-                File: <span className="font-medium text-text">{file?.name}</span>{" "}
-                &middot;{" "}
-                {file?.size && `${(file.size / 1024).toFixed(0)} KB`}
+                {issues.length} issue{issues.length !== 1 ? "s" : ""} found — review the details below and re-upload a corrected file.
               </p>
-
-              {issues.length > 0 ? (
-                <div className="mt-4 space-y-2">
-                  {issues.map((issue, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
-                        issue.type === "error"
-                          ? "bg-danger/5 text-danger"
-                          : "bg-warning/5 text-warning"
-                      }`}
-                    >
-                      {issue.type === "error" ? (
-                        <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                      )}
-                      <span>{issue.message}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-4 text-sm text-success font-medium flex items-center gap-1">
-                  <CheckCircle className="h-4 w-4" />
-                  File structure looks good — ready to convert.
+              {stats && (
+                <p className="text-xs text-text-muted mt-2">
+                  Processed {stats.rowCount} row{stats.rowCount !== 1 ? "s" : ""} across {stats.columnCount} column{stats.columnCount !== 1 ? "s" : ""}
+                  {" · "}
+                  <span className="font-mono">{stats.fileName}</span>
+                  {" · "}
+                  {stats.fileSizeKB} KB
                 </p>
               )}
             </div>
           </div>
 
+          {/* Error list */}
+          {issues.length > 0 && (
+            <div className="rounded-2xl bg-surface border border-border overflow-hidden">
+              <div className="px-6 py-3 border-b border-border bg-surface-hover">
+                <span className="text-sm font-semibold text-text">Validation Errors ({issues.length})</span>
+              </div>
+              <div className="divide-y divide-border max-h-80 overflow-y-auto">
+                {issues.map((issue, i) => (
+                  <div key={i} className="flex items-start gap-3 px-6 py-3 text-sm">
+                    <AlertTriangle className="h-4 w-4 text-danger flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-text-secondary">{issue.message}</span>
+                      {(issue.row || issue.column) && (
+                        <span className="text-text-muted ml-2 text-xs">
+                          {issue.row && `Row ${issue.row}`}
+                          {issue.row && issue.column && " · "}
+                          {issue.column && `${issue.column}`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {warnings.length > 0 && (
+            <div className="rounded-2xl bg-warning/5 border border-warning/20 p-4">
+              <p className="text-sm font-semibold text-warning mb-2">Warnings ({warnings.length})</p>
+              <ul className="space-y-1">
+                {warnings.map((w, i) => (
+                  <li key={i} className="text-sm text-text-secondary flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                    {w.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="flex gap-3">
             <button
-              onClick={handleConvert}
-              className="inline-flex items-center justify-center rounded-xl bg-accent text-white px-8 py-4 text-base font-semibold hover:bg-accent-light transition-colors min-h-[56px] flex-1 sm:flex-none"
+              onClick={reset}
+              className="inline-flex items-center justify-center rounded-xl bg-accent text-white px-8 py-4 text-base font-semibold hover:bg-accent-light transition-colors min-h-[56px]"
             >
-              Convert to ASYCUDA XML
-              <Download className="ml-2 h-5 w-5" />
-            </button>
-            <button
-              onClick={handleReset}
-              className="inline-flex items-center justify-center rounded-xl border border-border text-text-secondary px-6 py-4 text-base font-medium hover:bg-surface-hover transition-colors min-h-[56px]"
-            >
-              Upload Different File
+              Upload a Different File
             </button>
           </div>
         </div>
       )}
 
-      {/* Converting */}
-      {step === "converting" && (
-        <div className="mt-8 flex flex-col items-center justify-center rounded-2xl bg-surface border border-border p-16">
-          <Loader2 className="h-16 w-16 text-accent animate-spin mb-6" />
-          <h2 className="text-xl font-semibold text-text">
-            Converting your manifest...
-          </h2>
-          <p className="text-sm text-text-muted mt-2">
-            This usually takes a few seconds.
-          </p>
-          <div className="mt-6 w-full max-w-xs h-2 bg-border rounded-full overflow-hidden">
-            <div className="h-full bg-accent rounded-full animate-pulse w-2/3" />
-          </div>
-        </div>
-      )}
-
-      {/* Complete */}
+      {/* ─── COMPLETE STATE ─── */}
       {step === "complete" && xmlContent && (
         <div className="mt-8 space-y-6">
           <div className="flex items-start gap-4 rounded-2xl bg-success/5 border border-success/20 p-6">
@@ -342,22 +292,38 @@ export default function ConverterPage() {
               <CheckCircle className="h-6 w-6 text-success" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-text">
-                XML Generated Successfully
-              </h2>
+              <h2 className="text-xl font-semibold text-text">XML Generated Successfully</h2>
               <p className="text-sm text-text-muted mt-1">
-                Your ASYCUDA-compliant XML file is ready. Download it below.
+                Your ASYCUDA-compliant XML is ready. {stats && `${stats.rowCount} consignment${stats.rowCount !== 1 ? "s" : ""} processed.`}
               </p>
+              {warnings.length > 0 && (
+                <p className="text-xs text-warning mt-2">
+                  {warnings.length} warning{warnings.length !== 1 ? "s" : ""} — see details below.
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Warnings */}
+          {warnings.length > 0 && (
+            <div className="rounded-2xl bg-warning/5 border border-warning/20 p-4">
+              <p className="text-sm font-semibold text-warning mb-2">Warnings</p>
+              <ul className="space-y-1">
+                {warnings.map((w, i) => (
+                  <li key={i} className="text-sm text-text-secondary flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                    {w.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* XML Preview */}
           <div className="rounded-2xl bg-surface border border-border overflow-hidden">
             <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-surface-hover">
-              <span className="text-sm font-semibold text-text">
-                XML Preview
-              </span>
-              <span className="text-xs text-text-muted">
+              <span className="text-sm font-semibold text-text">XML Preview</span>
+              <span className="text-xs text-text-muted font-mono">
                 {file?.name?.replace(/\.(xlsx|xls)$/i, ".xml")}
               </span>
             </div>
@@ -375,7 +341,7 @@ export default function ConverterPage() {
               Download XML File
             </button>
             <button
-              onClick={handleReset}
+              onClick={reset}
               className="inline-flex items-center justify-center rounded-xl border border-border text-text-secondary px-6 py-4 text-base font-medium hover:bg-surface-hover transition-colors min-h-[56px]"
             >
               Convert Another File

@@ -1,14 +1,52 @@
-import Link from "next/link";
-import type { Metadata } from "next";
-import { ArrowLeft, Mail, MessageCircle, Clock } from "lucide-react";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Support",
-  description:
-    "Get help with the ASYCUDA Excel Converter. Contact support, report issues, or ask questions about Excel-to-XML conversion.",
-};
+import Link from "next/link";
+import { useState, type FormEvent } from "react";
+import { ArrowLeft, Mail, MessageCircle, Clock, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 
 export default function SupportPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [errors, setErrors] = useState<{ field: string; message: string }[]>([]);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setErrors([]);
+    setServerError(null);
+    setStatus("submitting");
+
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.errors) {
+          setErrors(data.errors);
+        } else {
+          setServerError(data.error || "Something went wrong.");
+        }
+        setStatus("error");
+        return;
+      }
+
+      setStatus("success");
+      setName("");
+      setEmail("");
+      setMessage("");
+    } catch {
+      setServerError("Network error. Please check your connection and try again.");
+      setStatus("error");
+    }
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       <nav aria-label="Breadcrumb" className="mb-8">
@@ -65,49 +103,119 @@ export default function SupportPage() {
 
       <div className="mt-12 p-8 rounded-2xl bg-surface border border-border">
         <h2 className="text-xl font-semibold text-text mb-6">Send a Message</h2>
-        <form className="space-y-5">
-          <div>
-            <label htmlFor="support-name" className="block text-sm font-medium text-text mb-1">
-              Name
-            </label>
-            <input
-              id="support-name"
-              type="text"
-              required
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors"
-              placeholder="Your name"
-            />
+
+        {/* Success state */}
+        {status === "success" && (
+          <div className="flex items-start gap-3 rounded-xl bg-success/5 border border-success/20 p-4 mb-6">
+            <CheckCircle className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-success text-sm">Message Sent</p>
+              <p className="text-sm text-text-secondary mt-1">
+                We&apos;ll get back to you within 24 hours.
+              </p>
+            </div>
           </div>
-          <div>
-            <label htmlFor="support-email" className="block text-sm font-medium text-text mb-1">
-              Email
-            </label>
-            <input
-              id="support-email"
-              type="email"
-              required
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors"
-              placeholder="you@example.com"
-            />
+        )}
+
+        {/* Server error */}
+        {(serverError || status === "error") && !errors.length && (
+          <div className="flex items-start gap-3 rounded-xl bg-danger/5 border border-danger/20 p-4 mb-6">
+            <AlertTriangle className="h-5 w-5 text-danger flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-danger text-sm">Error</p>
+              <p className="text-sm text-text-secondary mt-1">
+                {serverError || "Something went wrong. Please try again."}
+              </p>
+              <button
+                onClick={() => { setStatus("idle"); setServerError(null); }}
+                className="mt-2 text-sm font-medium text-accent"
+              >
+                Try again
+              </button>
+            </div>
           </div>
-          <div>
-            <label htmlFor="support-message" className="block text-sm font-medium text-text mb-1">
-              Message
-            </label>
-            <textarea
-              id="support-message"
-              required
-              rows={4}
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors resize-y"
-              placeholder="Describe your issue or question..."
-            />
-          </div>
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center rounded-xl bg-accent text-white px-8 py-3 text-sm font-semibold hover:bg-accent-light transition-colors min-h-[48px]"
-          >
-            Send Message
-          </button>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {status === "success" && (
+            <button
+              type="button"
+              onClick={() => setStatus("idle")}
+              className="inline-flex items-center justify-center rounded-xl bg-accent text-white px-8 py-3 text-sm font-semibold hover:bg-accent-light transition-colors min-h-[48px]"
+            >
+              Send Another Message
+            </button>
+          )}
+
+          {(status === "idle" || status === "submitting" || status === "error") && (
+            <>
+              <div>
+                <label htmlFor="support-name" className="block text-sm font-medium text-text mb-1">
+                  Name
+                </label>
+                <input
+                  id="support-name"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors"
+                  placeholder="Your name"
+                />
+                {errors.find((e) => e.field === "name") && (
+                  <p className="text-xs text-danger mt-1">{errors.find((e) => e.field === "name")!.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="support-email" className="block text-sm font-medium text-text mb-1">
+                  Email
+                </label>
+                <input
+                  id="support-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors"
+                  placeholder="you@example.com"
+                />
+                {errors.find((e) => e.field === "email") && (
+                  <p className="text-xs text-danger mt-1">{errors.find((e) => e.field === "email")!.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="support-message" className="block text-sm font-medium text-text mb-1">
+                  Message
+                </label>
+                <textarea
+                  id="support-message"
+                  required
+                  rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors resize-y"
+                  placeholder="Describe your issue or question..."
+                />
+                {errors.find((e) => e.field === "message") && (
+                  <p className="text-xs text-danger mt-1">{errors.find((e) => e.field === "message")!.message}</p>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={status === "submitting"}
+                className="inline-flex items-center justify-center rounded-xl bg-accent text-white px-8 py-3 text-sm font-semibold hover:bg-accent-light transition-colors min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {status === "submitting" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Message"
+                )}
+              </button>
+            </>
+          )}
         </form>
       </div>
     </div>

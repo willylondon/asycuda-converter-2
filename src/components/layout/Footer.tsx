@@ -72,10 +72,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="border-t border-primary-light mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} IGonics. All rights reserved.
-          </p>
-          <p className="text-sm text-gray-600">
-            Built with Next.js &middot; Deployed on Vercel
+            &copy; {new Date().getFullYear()} Willy London. All rights reserved.
           </p>
         </div>
       </div>
