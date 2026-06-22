@@ -8,21 +8,18 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { supportSchema, type SupportFieldError } from "@/lib/support";
 
-const supportSchema = z.object({
-  name: z.string().min(1, "Name is required").max(200, "Name is too long"),
-  email: z.string().email("Invalid email address"),
-  message: z
-    .string()
-    .min(10, "Message must be at least 10 characters")
-    .max(5000, "Message must be under 5,000 characters"),
-});
+type SupportRateLimitEntry = { count: number; resetAt: number };
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __supportRateLimit: Map<string, SupportRateLimitEntry> | undefined;
+}
 
 export async function POST(request: NextRequest) {
-  // Rate limiting (same in-memory pattern as /api/convert)
-  const rateLimitMap = (globalThis as any).__supportRateLimit || new Map<string, { count: number; resetAt: number }>();
-  (globalThis as any).__supportRateLimit = rateLimitMap;
+  const rateLimitMap =
+    globalThis.__supportRateLimit ??= new Map<string, SupportRateLimitEntry>();
 
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -37,42 +34,42 @@ export async function POST(request: NextRequest) {
       { status: 429 }
     );
   }
+
   if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 300_000 }); // 5 min window
+    rateLimitMap.set(ip, { count: 1, resetAt: now + 300_000 });
   } else {
     entry.count++;
   }
 
-  // Parse and validate
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const parsed = supportSchema.safeParse(body);
   if (!parsed.success) {
-    const errors = parsed.error.issues.map((i) => ({
-      field: i.path.join("."),
-      message: i.message,
+    const errors: SupportFieldError[] = parsed.error.issues.map((issue) => ({
+      field: issue.path.join(".") as SupportFieldError["field"],
+      message: issue.message,
     }));
-    return NextResponse.json({ error: "Validation failed", errors }, { status: 422 });
+
+    return NextResponse.json(
+      { error: "Validation failed", errors },
+      { status: 422 }
+    );
   }
 
   const { name, email, message } = parsed.data;
 
-  // If SUPPORT_EMAIL is configured, send it
   if (process.env.SUPPORT_EMAIL) {
     try {
-      // In production, use a mail provider (Resend, SendGrid, Nodemailer, etc.)
-      // For now, log it — email sending requires additional configuration
-      console.log(`[SUPPORT] From: ${name} <${email}> — ${message.substring(0, 100)}...`);
-    } catch (err) {
-      console.error("Failed to send support email:", err);
+      console.log(
+        `[SUPPORT] From: ${name} <${email}> — ${message.substring(0, 100)}...`
+      );
+    } catch (error) {
+      console.error("Failed to send support email:", error);
     }
   } else {
     console.log(`[SUPPORT] No email configured. From: ${name} <${email}> — ${message}`);

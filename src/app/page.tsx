@@ -7,7 +7,6 @@ import {
   Shield,
   Zap,
   ArrowRight,
-  Play,
 } from "lucide-react";
 
 const STEPS = [
@@ -81,196 +80,433 @@ const FAQ_ITEMS = [
 export default function HomePage() {
   return (
     <>
-      {/* ═══ HERO ═══ */}
       <section
-        className="relative bg-primary overflow-hidden"
+        className="relative overflow-hidden bg-primary text-white"
         aria-labelledby="hero-heading"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-light to-accent-dark opacity-90" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/20 via-transparent to-transparent" />
+        <div
+          className="absolute inset-0"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, rgba(7, 21, 36, 0.97), rgba(11, 31, 51, 0.94)), radial-gradient(circle at top left, rgba(14, 165, 196, 0.22), transparent 30%), radial-gradient(circle at 82% 10%, rgba(201, 134, 20, 0.16), transparent 25%)",
+          }}
+        />
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[1.12fr_0.88fr] lg:gap-16 lg:px-8 lg:py-28">
           <div className="max-w-3xl">
+            <p className="text-sm font-semibold tracking-normal text-accent-light">
+              Built for customs workflows
+            </p>
             <h1
               id="hero-heading"
-              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1]"
+              className="mt-4 text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-balance sm:text-5xl lg:text-6xl"
             >
-              Convert Excel Delivery Manifests Into{" "}
-              <span className="text-accent">ASYCUDA XML</span> In Minutes
+              Convert Excel manifests into ASYCUDA XML without the manual drag.
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-gray-300 max-w-2xl leading-relaxed">
-              Validate, convert, and download customs-ready XML files without
-              manual formatting. Upload your Excel file and get compliant XML in
-              under 60 seconds.
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/75 sm:text-xl">
+              Validate, convert, and download customs-ready XML in a single
+              flow. Your file stays in memory, checks happen before export, and
+              the output is ready fast enough to keep the day moving.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4">
+
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/converter"
-                className="inline-flex items-center justify-center rounded-xl bg-accent text-white px-8 py-4 text-base font-semibold hover:bg-accent-light transition-colors shadow-lg shadow-accent/25 min-h-[56px]"
+                className="inline-flex min-h-[54px] items-center justify-center rounded-xl bg-accent px-8 py-4 text-base font-semibold text-white transition-colors hover:bg-accent-light"
               >
                 Start Converting
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight aria-hidden="true" className="ml-2 h-5 w-5" />
               </Link>
               <Link
                 href="/samples/sample-manifest.xlsx"
-                className="inline-flex items-center justify-center rounded-xl border-2 border-white/20 text-white px-8 py-4 text-base font-semibold hover:bg-white/10 transition-colors min-h-[56px]"
+                className="inline-flex min-h-[54px] items-center justify-center rounded-xl border border-white/20 bg-white/5 px-8 py-4 text-base font-semibold text-white transition-colors hover:bg-white/10"
               >
-                <FileSpreadsheet className="mr-2 h-5 w-5" />
+                <FileSpreadsheet aria-hidden="true" className="mr-2 h-5 w-5" />
                 Download Sample File
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ═══ HOW IT WORKS ═══ */}
-      <section
-        className="py-16 sm:py-24 bg-surface"
-        aria-labelledby="how-it-works-heading"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2
-              id="how-it-works-heading"
-              className="text-3xl sm:text-4xl font-bold text-text"
-            >
-              How It Works
-            </h2>
-            <p className="mt-4 text-lg text-text-muted">
-              Three simple steps from Excel to customs-ready XML.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {STEPS.map((step, i) => (
-              <div
-                key={step.title}
-                className="relative flex flex-col items-center text-center p-8 rounded-2xl border border-border bg-surface hover:shadow-lg transition-shadow"
-              >
-                <div
-                  className={`w-16 h-16 ${step.bg} rounded-2xl flex items-center justify-center mb-5`}
+            <ul className="mt-8 flex flex-wrap gap-3">
+              {[
+                "In-memory processing",
+                "WCAG 2.2 AA",
+                "No account required",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80"
                 >
-                  <step.icon className={`h-8 w-8 ${step.color}`} />
-                </div>
-                <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-bold">
-                  {i + 1}
-                </div>
-                <h3 className="text-xl font-semibold text-text mb-3">
-                  {step.title}
-                </h3>
-                <p className="text-text-muted leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ BENEFITS ═══ */}
-      <section
-        className="py-16 sm:py-24 bg-background"
-        aria-labelledby="benefits-heading"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2
-              id="benefits-heading"
-              className="text-3xl sm:text-4xl font-bold text-text"
-            >
-              Why Use Our Converter?
-            </h2>
-            <p className="mt-4 text-lg text-text-muted">
-              Built for customs brokers, freight forwarders, and logistics
-              professionals.
-            </p>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-8">
-            {BENEFITS.map((benefit) => (
-              <div
-                key={benefit.title}
-                className="p-8 rounded-2xl bg-surface border border-border text-center hover:border-accent/30 transition-colors"
-              >
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <benefit.icon className="h-6 w-6 text-accent" />
-                </div>
-                <h3 className="text-lg font-semibold text-text mb-2">
-                  {benefit.title}
-                </h3>
-                <p className="text-text-muted text-sm leading-relaxed">
-                  {benefit.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ DEMO ═══ */}
-      <section
-        className="py-16 sm:py-24 bg-surface"
-        aria-labelledby="demo-heading"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2
-              id="demo-heading"
-              className="text-3xl sm:text-4xl font-bold text-text"
-            >
-              Watch the Demo
-            </h2>
-            <p className="mt-4 text-lg text-text-muted">
-              See how easy it is to convert your Excel files to ASYCUDA XML.
-            </p>
-          </div>
-
-          <div className="max-w-3xl mx-auto">
-            <div className="relative rounded-2xl overflow-hidden bg-primary-light aspect-video group">
-              {/* Thumbnail placeholder — click to load YouTube */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center mx-auto mb-4 shadow-xl shadow-accent/50 group-hover:scale-110 transition-transform">
-                    <Play className="h-8 w-8 text-white ml-1" />
-                  </div>
-                  <p className="text-white/70 text-sm">
-                    Click to watch the demo video
+          <div className="lg:pt-6">
+            <div className="rounded-[24px] border border-white/10 bg-primary-dark/92 p-6 sm:p-8">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-accent-light">
+                    Validation cockpit
+                  </p>
+                  <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/70">
+                    Your manifest is checked before conversion so issues show up
+                    while they are still easy to fix.
                   </p>
                 </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
+                  Under 60 seconds
+                </span>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      manifest-delivery.xlsx
+                    </p>
+                    <p className="mt-1 text-xs text-white/60">
+                      XLSX upload, 8.4 MB
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success-light">
+                    Ready to validate
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {[
+                    {
+                      title: "Required columns",
+                      detail: "Container Number, Bill of Lading, Consignee, and other customs fields.",
+                    },
+                    {
+                      title: "Type checks",
+                      detail: "Weights, package counts, ports, and date formats are verified.",
+                    },
+                    {
+                      title: "Output",
+                      detail: "ASYCUDA-compliant XML is generated only after validation passes.",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.title}
+                      className="flex gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+                    >
+                      <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-light" />
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-white/70">
+                          {item.detail}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-white/70">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+                  <Shield aria-hidden="true" className="h-4 w-4 text-accent-light" />
+                  Files stay in memory only
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+                  <Download aria-hidden="true" className="h-4 w-4 text-accent-light" />
+                  Direct XML download
+                </span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══ FAQ ═══ */}
+      <section className="-mt-6 py-8 sm:py-10" aria-label="Trust signals">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid overflow-hidden rounded-[24px] border border-border bg-surface md:grid-cols-3">
+            {[
+              {
+                title: "In-memory processing",
+                description:
+                  "Excel files are checked and converted without being written to disk.",
+              },
+              {
+                title: "Instant validation",
+                description:
+                  "Structure, types, and customs requirements are surfaced before XML generation.",
+              },
+              {
+                title: "Customs-ready XML",
+                description:
+                  "The output follows ASYCUDA expectations so users can move toward submission quickly.",
+              },
+            ].map((item, index) => (
+              <div
+                key={item.title}
+                className={`p-6 sm:p-7 ${
+                  index < 2 ? "border-b border-border md:border-b-0 md:border-r" : ""
+                } border-border`}
+              >
+                <p className="text-base font-semibold text-text">{item.title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-text-muted">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section
-        className="py-16 sm:py-24 bg-background"
+        className="py-16 sm:py-24 lg:py-28"
+        aria-labelledby="how-it-works-heading"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2
+              id="how-it-works-heading"
+              className="text-3xl font-bold text-text sm:text-4xl"
+            >
+              How It Works
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-text-muted">
+              A short, linear path from spreadsheet to customs-ready XML.
+            </p>
+          </div>
+
+          <div className="mt-14 grid gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
+            <div className="space-y-5">
+              {STEPS.map((step, i) => (
+                <div
+                  key={step.title}
+                  className="flex gap-4 rounded-[20px] border border-border bg-surface px-5 py-5 sm:px-6"
+                >
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-surface-muted">
+                    <step.icon aria-hidden="true" className={`h-6 w-6 ${step.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                        {i + 1}
+                      </span>
+                      <h3 className="text-lg font-semibold text-text">
+                        {step.title}
+                      </h3>
+                    </div>
+                    <p className="mt-3 max-w-xl text-sm leading-relaxed text-text-muted">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-[24px] border border-border bg-surface p-6 sm:p-8">
+              <p className="text-sm font-semibold text-accent">
+                What gets checked
+              </p>
+              <h3 className="mt-3 text-2xl font-semibold text-text">
+                Validation stays visible before conversion.
+              </h3>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-text-muted">
+                The converter is not a black box. It checks the structure you
+                depend on, then explains what it found in plain English.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {[
+                  "File type and size",
+                  "Required column presence",
+                  "Column data types",
+                  "Duplicate BOL detection",
+                  "Container number format",
+                  "Port code consistency",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-xl border border-border-light bg-background px-4 py-3 text-sm font-medium text-text-secondary"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="py-16 sm:py-24 lg:py-28 bg-background"
+        aria-labelledby="benefits-heading"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[1fr_0.92fr] lg:gap-16">
+            <div>
+              <h2
+                id="benefits-heading"
+                className="text-3xl font-bold text-text sm:text-4xl"
+              >
+                Why Use Our Converter?
+              </h2>
+              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-text-muted">
+                Built for customs brokers, freight forwarders, and logistics
+                teams that need speed without trading away confidence.
+              </p>
+
+              <div className="mt-10 divide-y divide-border rounded-[24px] border border-border bg-surface">
+                {BENEFITS.map((benefit) => (
+                  <div
+                    key={benefit.title}
+                    className="flex gap-4 px-6 py-6 sm:px-7"
+                  >
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent/10">
+                      <benefit.icon aria-hidden="true" className="h-6 w-6 text-accent" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-text">
+                        {benefit.title}
+                      </h3>
+                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted">
+                        {benefit.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <aside className="rounded-[24px] border border-primary/10 bg-primary p-8 text-white">
+              <p className="text-sm font-semibold text-accent-light">
+                Built for the real workflow
+              </p>
+              <p className="mt-4 text-xl font-semibold leading-tight">
+                One file. One validation pass. One clean XML export.
+              </p>
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/76">
+                No subscription maze, no scattered settings, and no guessing
+                whether the manifest was accepted. The interface keeps the
+                conversion process readable from top to bottom.
+              </p>
+              <ul className="mt-8 space-y-3 text-sm text-white/75">
+                <li className="flex gap-3">
+                  <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-light" />
+                  Uses your existing Excel templates.
+                </li>
+                <li className="flex gap-3">
+                  <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-light" />
+                  Surfaces problems before XML generation.
+                </li>
+                <li className="flex gap-3">
+                  <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-light" />
+                  Keeps the output ready for direct download.
+                </li>
+              </ul>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="py-16 sm:py-24 lg:py-28 bg-surface"
+        aria-labelledby="demo-heading"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
+            <div>
+              <h2
+                id="demo-heading"
+                className="text-3xl font-bold text-text sm:text-4xl"
+              >
+                Watch the Demo
+              </h2>
+              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-text-muted">
+                See the real conversion flow in motion before you upload your
+                own manifest.
+              </p>
+
+              <div className="mt-8 overflow-hidden rounded-[24px] border border-border bg-primary shadow-sm">
+                <div className="relative aspect-video overflow-hidden">
+                  <video
+                    className="h-full w-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    controls
+                    poster="/demo/demo-poster.png"
+                  >
+                    <source src="/demo/demo.mp4" type="video/mp4" />
+                    Your browser does not support the demo video.
+                  </video>
+                  <div className="pointer-events-none absolute left-4 top-4 rounded-full border border-white/15 bg-primary/80 px-3 py-1 text-xs font-semibold tracking-wide text-white/85 backdrop-blur">
+                    Real demo reel
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-border bg-background p-6 sm:p-8">
+              <p className="text-sm font-semibold text-accent">What the demo shows</p>
+              <ul className="mt-5 space-y-4 text-sm leading-relaxed text-text-muted">
+                <li className="flex gap-3">
+                  <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-success" />
+                  The live homepage introducing the converter.
+                </li>
+                <li className="flex gap-3">
+                  <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-success" />
+                  The converter page showing the upload state.
+                </li>
+                <li className="flex gap-3">
+                  <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-success" />
+                  The actual XML output generated from the sample workbook.
+                </li>
+              </ul>
+              <div className="mt-8 rounded-2xl border border-border-light bg-surface px-5 py-4">
+                <p className="text-sm font-semibold text-text">Tip</p>
+                <p className="mt-2 text-sm leading-relaxed text-text-muted">
+                  Use the sample file first if you want to compare the reel with
+                  the real validation and download flow before connecting your
+                  own data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="py-16 sm:py-24 lg:py-28 bg-background"
         aria-labelledby="faq-heading"
       >
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center">
             <h2
               id="faq-heading"
-              className="text-3xl sm:text-4xl font-bold text-text"
+              className="text-3xl font-bold text-text sm:text-4xl"
             >
               Frequently Asked Questions
             </h2>
+            <p className="mt-4 text-lg leading-relaxed text-text-muted">
+              Straight answers for the questions teams usually ask before they
+              switch tools.
+            </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="mt-10 overflow-hidden rounded-[24px] border border-border bg-surface">
             {FAQ_ITEMS.map((item) => (
               <details
                 key={item.q}
-                className="group bg-surface border border-border rounded-xl overflow-hidden"
+                className="group border-b border-border last:border-b-0"
               >
-                <summary className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-surface-hover transition-colors min-h-[56px] font-medium text-text">
-                  {item.q}
-                  <span className="ml-4 flex-shrink-0 text-text-muted group-open:rotate-180 transition-transform">
+                <summary className="flex min-h-[56px] cursor-pointer items-center justify-between px-6 py-5 font-semibold text-text transition-colors hover:bg-surface-hover">
+                  <span className="pr-4 text-left">{item.q}</span>
+                  <span className="flex-shrink-0 text-text-muted transition-transform group-open:rotate-180">
                     ▼
                   </span>
                 </summary>
-                <div className="px-6 pb-4 text-text-secondary leading-relaxed">
+                <div className="px-6 pb-5 text-sm leading-relaxed text-text-muted">
                   {item.a}
                 </div>
               </details>
@@ -279,25 +515,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ CTA ═══ */}
-      <section className="py-16 sm:py-24 bg-primary" aria-labelledby="cta-heading">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+      <section
+        className="bg-primary py-16 text-white sm:py-24 lg:py-28"
+        aria-labelledby="cta-heading"
+      >
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
           <h2
             id="cta-heading"
-            className="text-3xl sm:text-4xl font-bold text-white"
+            className="text-3xl font-bold text-white sm:text-4xl"
           >
-            Ready to Convert Your First Manifest?
+            Ready to convert your first manifest?
           </h2>
-          <p className="mt-4 text-lg text-gray-300">
-            Try it free with our sample file — no account required.
+          <p className="mt-4 text-lg leading-relaxed text-white/80">
+            Try the converter with the sample file. No account required.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
             <Link
               href="/converter"
-              className="inline-flex items-center justify-center rounded-xl bg-accent text-white px-8 py-4 text-base font-semibold hover:bg-accent-light transition-colors shadow-lg shadow-accent/25 min-h-[56px]"
+              className="inline-flex min-h-[54px] items-center justify-center rounded-xl bg-accent px-8 py-4 text-base font-semibold text-white transition-colors hover:bg-accent-light"
             >
               Start Converting Now
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight aria-hidden="true" className="ml-2 h-5 w-5" />
             </Link>
           </div>
         </div>

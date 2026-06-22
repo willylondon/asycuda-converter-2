@@ -30,10 +30,10 @@ export function Header() {
             href="/"
             className="flex items-center gap-2 font-bold text-lg text-primary hover:text-accent transition-colors"
           >
-            <span className="w-8 h-8 bg-accent text-white rounded-lg flex items-center justify-center text-sm font-extrabold">
-              A
+            <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center text-sm font-extrabold">
+              AC
             </span>
-            <span className="hidden sm:inline">ASYCUDA Converter</span>
+            <span className="hidden sm:inline">ASYCUDA Excel Converter</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -62,7 +62,11 @@ export function Header() {
             aria-expanded={menuOpen}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
           >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {menuOpen ? (
+              <X aria-hidden="true" className="h-5 w-5" />
+            ) : (
+              <Menu aria-hidden="true" className="h-5 w-5" />
+            )}
           </button>
         </nav>
 

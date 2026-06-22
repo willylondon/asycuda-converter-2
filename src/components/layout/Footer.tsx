@@ -31,18 +31,18 @@ export function Footer() {
               href="/"
               className="flex items-center gap-2 font-bold text-lg text-white hover:text-accent-light transition-colors mb-4"
             >
-              <FileSpreadsheet className="h-6 w-6 text-accent" />
-              <span>ASYCUDA Converter</span>
+              <FileSpreadsheet aria-hidden="true" className="h-6 w-6 text-accent" />
+              <span>ASYCUDA Excel Converter</span>
             </Link>
-            <p className="text-sm text-gray-400 leading-relaxed">
+            <p className="text-sm text-white/72 leading-relaxed">
               Convert Excel delivery manifests into ASYCUDA-compliant XML files.
               Fast, secure, customs-ready.
             </p>
             <a
-              href="mailto:support@asycuda-converter.vercel.app"
-              className="inline-flex items-center gap-2 mt-4 text-sm text-gray-400 hover:text-accent-light transition-colors min-h-[44px]"
+              href="mailto:support@asycuda-converter.com"
+              className="inline-flex items-center gap-2 mt-4 text-sm text-white/72 hover:text-accent-light transition-colors min-h-[44px]"
             >
-              <Mail className="h-4 w-4" />
+              <Mail aria-hidden="true" className="h-4 w-4" />
               <span>support@asycuda-converter.com</span>
             </a>
           </div>
@@ -50,7 +50,7 @@ export function Footer() {
           {/* Link Columns */}
           {Object.entries(FOOTER_LINKS).map(([title, links]) => (
             <div key={title}>
-              <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">
+              <h4 className="text-sm font-semibold text-white/85 mb-4">
                 {title}
               </h4>
               <ul className="space-y-2">
@@ -58,7 +58,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-gray-400 hover:text-accent-light transition-colors min-h-[44px] inline-flex items-center"
+                      className="text-sm text-white/72 hover:text-accent-light transition-colors min-h-[44px] inline-flex items-center"
                     >
                       {link.label}
                     </Link>
@@ -71,7 +71,7 @@ export function Footer() {
 
         {/* Copyright */}
         <div className="border-t border-primary-light mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-white/55">
             &copy; {new Date().getFullYear()} Willy London. All rights reserved.
           </p>
         </div>

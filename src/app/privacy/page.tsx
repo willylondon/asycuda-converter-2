@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           href="/"
           className="inline-flex items-center text-sm text-text-muted hover:text-accent transition-colors min-h-[44px]"
         >
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back to Home
+          <ArrowLeft aria-hidden="true" className="h-4 w-4 mr-1" /> Back to Home
         </Link>
       </nav>
 

@@ -16,7 +16,7 @@ export default function PricingPage() {
           href="/"
           className="inline-flex items-center text-sm text-text-muted hover:text-accent transition-colors min-h-[44px]"
         >
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back to Home
+          <ArrowLeft aria-hidden="true" className="h-4 w-4 mr-1" /> Back to Home
         </Link>
       </nav>
 
@@ -100,7 +100,7 @@ function PricingCard({
           : "border-border bg-surface"
       }`}
     >
-      <h3 className="text-xl font-semibold text-text">{title}</h3>
+      <h2 className="text-xl font-semibold text-text">{title}</h2>
       <div className="mt-4">
         <span className="text-4xl font-extrabold text-text">{price}</span>
         <span className="text-sm text-text-muted ml-2">{period}</span>
@@ -108,7 +108,7 @@ function PricingCard({
       <ul className="mt-6 space-y-3">
         {features.map((feature) => (
           <li key={feature} className="flex items-start gap-2 text-sm text-text-secondary">
-            <Check className="h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
+            <Check aria-hidden="true" className="h-4 w-4 flex-shrink-0 mt-0.5 text-accent" />
             {feature}
           </li>
         ))}
