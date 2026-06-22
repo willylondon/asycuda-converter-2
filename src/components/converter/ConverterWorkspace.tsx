@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
+import { useCallback, useRef, useState, useEffect, type DragEvent, type KeyboardEvent } from "react";
 import {
   ArrowLeft,
   Upload,
@@ -25,6 +25,64 @@ export function ConverterWorkspace() {
   const [stats, setStats] = useState<ConversionResult["stats"]>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // WiPay Verification States
+  const [paymentVerified, setPaymentVerified] = useState<boolean | null>(null);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<string | null>(null);
+  const [paymentTxId, setPaymentTxId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    const transactionId = params.get("transaction_id");
+    const orderId = params.get("order_id");
+    const total = params.get("total");
+    const hash = params.get("hash");
+
+    if (status && transactionId && total && hash) {
+      // Defer state updates to avoid synchronous setState in useEffect
+      Promise.resolve().then(() => {
+        setVerifyingPayment(true);
+        setPaymentTxId(transactionId);
+        setPaymentAmount(total);
+      });
+
+      // Clean URL params so they do not linger on refresh
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+
+      fetch("/api/wipay/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, transactionId, orderId, total, hash }),
+      })
+        .then((res) => {
+          if (!res.ok) {
+            return res.json().then((data) => {
+              throw new Error(data.error || "Payment verification failed.");
+            });
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (data.success) {
+            setPaymentVerified(true);
+          } else {
+            setPaymentError("Payment verification failed.");
+          }
+        })
+        .catch((err) => {
+          console.error("Verification error:", err);
+          setPaymentError(err instanceof Error ? err.message : "Network error during payment verification.");
+        })
+        .finally(() => {
+          setVerifyingPayment(false);
+        });
+    }
+  }, []);
+
   const reset = () => {
     setStep("upload");
     setFile(null);
@@ -34,6 +92,7 @@ export function ConverterWorkspace() {
     setError(null);
     setStats(null);
   };
+
 
   const convertFile = useCallback(async (selectedFile: File) => {
     setStep("validating");
@@ -137,6 +196,38 @@ export function ConverterWorkspace() {
       <p className="mt-2 text-lg text-text-muted">
         Upload your delivery manifest, validate against ASYCUDA requirements, and download compliant XML.
       </p>
+
+      {verifyingPayment && (
+        <div className="mt-8 flex items-center gap-3 rounded-xl border border-accent/20 bg-accent/5 p-4 animate-pulse">
+          <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-accent" />
+          <p className="text-sm font-medium text-text-secondary">
+            Verifying your WiPay payment... Please wait.
+          </p>
+        </div>
+      )}
+
+      {paymentVerified && (
+        <div className="mt-8 flex items-start gap-3 rounded-xl border border-success/20 bg-success/5 p-4 animate-fade-in">
+          <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-success" />
+          <div>
+            <p className="text-sm font-semibold text-success">Payment Verified</p>
+            <p className="mt-1 text-sm text-text-secondary">
+              Thank you! Your payment of ${paymentAmount} TTD (Tx ID: #{paymentTxId}) has been successfully verified. You can now use the converter workspace.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {paymentError && (
+        <div className="mt-8 flex items-start gap-3 rounded-xl border border-danger/20 bg-danger/5 p-4">
+          <XCircle aria-hidden="true" className="mt-0.5 h-5 w-5 flex-shrink-0 text-danger" />
+          <div>
+            <p className="text-sm font-semibold text-danger">Payment Verification Failed</p>
+            <p className="mt-1 text-sm text-text-secondary">{paymentError}</p>
+          </div>
+        </div>
+      )}
+
 
       {(step === "upload" || step === "uploading" || step === "validating") && (
         <div className="mt-8">
