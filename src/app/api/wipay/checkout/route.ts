@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
     formData.append("fee_structure", wipayFeeStructure);
     formData.append("method", "credit_card");
     formData.append("order_id", orderId);
-    formData.append("origin", "ASYCUDA Excel Converter");
+    formData.append("origin", "asycuda-converter");
     formData.append("response_url", responseUrl);
-    formData.append("total", String(total));
+    formData.append("total", total.toFixed(2));
 
     const endpoint = `https://${wipayCountryCode.toLowerCase()}.wipayfinancial.com/plugins/payments/request`;
 
