@@ -106,4 +106,4 @@ See `.env.example` for all required variables.
 
 ## License
 
-MIT © IGonics
+MIT © Willy London
