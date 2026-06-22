@@ -5,7 +5,7 @@ import { ArrowLeft, Mail, MapPin } from "lucide-react";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Contact IGonics — the team behind ASYCUDA Excel Converter. Get in touch for support, enterprise pricing, or partnership inquiries.",
+    "Contact the ASYCUDA Excel Converter team. Get in touch for support, enterprise pricing, or partnership inquiries.",
 };
 
 export default function ContactPage() {
@@ -38,7 +38,7 @@ export default function ContactPage() {
           <MapPin className="h-8 w-8 text-accent mb-4" />
           <h3 className="text-lg font-semibold text-text">Location</h3>
           <p className="mt-2 text-sm text-text-muted">
-            IGonics — Kingston, Jamaica
+            Willy London — Kingston, Jamaica
           </p>
         </div>
       </div>

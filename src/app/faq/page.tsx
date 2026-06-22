@@ -35,7 +35,7 @@ const FAQ_DATA = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "We accept credit/debit cards and PayPal. Payment is processed before you download your XML file. We use Stripe for secure payment processing.",
+    a: "We accept credit and debit cards. Payment is processed through Stripe for secure checkout before you download your XML file.",
   },
   {
     q: "Can I get a refund?",

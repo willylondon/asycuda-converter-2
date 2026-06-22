@@ -6,7 +6,7 @@ Convert Excel delivery manifests into ASYCUDA-compliant XML files in minutes. A 
 
 - **Drag-and-drop upload** — Upload .xlsx or .xls files up to 10MB
 - **Instant validation** — Check column structure, data types, and ASYCUDA requirements before conversion
-- **ASYCUDA-compliant XML** — Output follows ASYCUDA World specifications exactly
+- **ASYCUDA-compliant XML** — Output follows ASYCUDA World requirements and is validated before generation
 - **No account required** — Convert files immediately, no registration needed
 - **Secure by design** — Files processed in memory, never stored on disk
 - **Accessible** — WCAG 2.2 AA compliant with full keyboard navigation
