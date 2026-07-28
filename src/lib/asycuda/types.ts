@@ -49,9 +49,14 @@ export interface ExtractionItem {
   rawHsCode: string | null;
   suggestedHsCode: string | null;
   hsCodeConfidence: number | null;
+  /** Product/unit quantity shown on the invoice. */
   quantity: number | null;
   unitOfMeasure: string | null;
   packageType: string | null;
+  /** Number of packages for this line, kept separate from product quantity. */
+  packageCount: number | null;
+  /** Statistical/supplementary quantity for Box 41 when shown. */
+  statisticalQuantity: number | null;
   countryOfOrigin: string | null;
   grossWeightKg: number | null;
   netWeightKg: number | null;
@@ -98,10 +103,6 @@ export interface EditableLineItem extends ExtractionItem {
   hsConfirmed: boolean;
   includeInXml: boolean;
   hsSource: "invoice" | "ai-suggestion" | "manual" | "saved-mapping";
-  /** Number of packages for this item; never inferred from product quantity. */
-  packageCount: number | null;
-  /** Statistical/supplementary quantity for Box 41. */
-  statisticalQuantity: number | null;
 }
 
 export type ValidationSeverity = "error" | "warning" | "info";
