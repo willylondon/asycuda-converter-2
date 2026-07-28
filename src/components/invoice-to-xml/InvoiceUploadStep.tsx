@@ -37,11 +37,12 @@ interface InvoiceExtractionResult {
 interface Props {
   onExtracted: (result: InvoiceExtractionResult) => void;
   onSkip: () => void;
+  onLoadDemo: () => void;
 }
 
 // ─── Component ─────────────────────────────────────────────────────
 
-export function InvoiceUploadStep({ onExtracted, onSkip }: Props) {
+export function InvoiceUploadStep({ onExtracted, onSkip, onLoadDemo }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "uploading" | "extracting" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -197,13 +198,20 @@ export function InvoiceUploadStep({ onExtracted, onSkip }: Props) {
         </div>
       )}
 
-      {/* Skip */}
-      <div className="mt-8 text-center">
+      {/* Manual entry / Demo mode */}
+      <div className="mt-8 flex items-center justify-center gap-6">
         <button
           onClick={onSkip}
           className="text-sm text-text-muted hover:text-text underline underline-offset-4"
         >
-          Skip upload — enter invoice data manually
+          Enter invoice data manually
+        </button>
+        <span className="text-text-muted/40">·</span>
+        <button
+          onClick={onLoadDemo}
+          className="text-sm text-warning hover:text-warning/80 underline underline-offset-4"
+        >
+          Load PriceSmart Demo
         </button>
       </div>
     </div>

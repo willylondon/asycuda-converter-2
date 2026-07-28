@@ -26,7 +26,7 @@ interface InvoiceItem {
   warnings: string[];
   confirmedHsCode?: string | null;
   includeInXml?: boolean;
-  hsSource?: "invoice" | "kimi-suggestion" | "manual" | "saved-mapping";
+  hsSource?: "invoice" | "ai-suggestion" | "manual" | "saved-mapping";
 }
 
 // ─── Props ─────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ export function ReviewItemsStep({ items: initialItems, onUpdate, onNext, onBack 
         includeInXml: item.includeInXml ?? true,
         normalizedCommodityCode: norm.commodityCode,
         precision: norm.precision,
-        hsSource: item.hsSource || (item.rawHsCode ? "invoice" : item.suggestedHsCode ? "kimi-suggestion" : undefined),
+        hsSource: item.hsSource || (item.rawHsCode ? "invoice" : item.suggestedHsCode ? "ai-suggestion" : undefined),
       };
     })
   );
@@ -212,7 +212,7 @@ export function ReviewItemsStep({ items: initialItems, onUpdate, onNext, onBack 
                       value={item.normalizedCommodityCode ?? ""}
                       onChange={(e) => updateItem(index, "rawHsCode", e.target.value)}
                       className={`w-24 rounded border px-1.5 py-1 text-xs font-mono focus:outline-none ${
-                        item.hsSource === "kimi-suggestion" ? "border-warning/50 bg-warning/5" :
+                        item.hsSource === "ai-suggestion" ? "border-warning/50 bg-warning/5" :
                         item.hsSource === "manual" ? "border-accent/50 bg-accent/5" :
                         "border-border bg-transparent"
                       }`}

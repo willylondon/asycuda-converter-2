@@ -8,6 +8,7 @@ import { ReviewShipmentStep } from "@/components/invoice-to-xml/ReviewShipmentSt
 import { ReviewItemsStep } from "@/components/invoice-to-xml/ReviewItemsStep";
 import { ValidationStep } from "@/components/invoice-to-xml/ValidationStep";
 import { XmlPreviewStep } from "@/components/invoice-to-xml/XmlPreviewStep";
+import { PRICEMART_DEMO_EXTRACTION } from "@/lib/asycuda/demo-data";
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -56,6 +57,7 @@ export default function NewDeclarationPage() {
   const [declaration, setDeclaration] = useState<DeclarationDetails | null>(null);
   const [extraction, setExtraction] = useState<InvoiceExtractionResult | null>(null);
   const [editedItems, setEditedItems] = useState<any[]>([]);
+  const [isDemo, setIsDemo] = useState(false);
 
   const handleDeclarationNext = (data: DeclarationDetails) => {
     setDeclaration(data);
@@ -65,10 +67,27 @@ export default function NewDeclarationPage() {
   const handleExtracted = (result: InvoiceExtractionResult) => {
     setExtraction(result);
     setEditedItems(result.items.map((item) => ({...item})));
+    setIsDemo(false);
     setStep(3);
   };
 
   const handleSkipUpload = () => {
+    setIsDemo(false);
+    setStep(3);
+  };
+
+  const handleLoadDemo = () => {
+    const demoData = PRICEMART_DEMO_EXTRACTION as unknown as InvoiceExtractionResult;
+    setExtraction({
+      ...demoData,
+      warnings: [
+        "⚠️ DEMO DATA — NOT EXTRACTED FROM AN UPLOADED FILE",
+        "This is the built-in PriceSmart test fixture. Upload a real invoice to use AI extraction.",
+        ...demoData.warnings,
+      ],
+    });
+    setEditedItems(demoData.items.map((item) => ({...item})));
+    setIsDemo(true);
     setStep(3);
   };
 
@@ -163,6 +182,7 @@ export default function NewDeclarationPage() {
           <InvoiceUploadStep
             onExtracted={handleExtracted}
             onSkip={handleSkipUpload}
+            onLoadDemo={handleLoadDemo}
           />
         )}
 
@@ -199,7 +219,7 @@ export default function NewDeclarationPage() {
               normalizedCommodityCode: (item.rawHsCode || "").replace(/[\s.]+/g, "").slice(0, 8),
               precision: (item.rawHsCode || "").replace(/[\s.]+/g, "").slice(8),
               confirmedHsCode: null,
-              hsSource: item.rawHsCode ? "invoice" as const : item.suggestedHsCode ? "kimi-suggestion" as const : undefined,
+              hsSource: item.rawHsCode ? "invoice" as const : item.suggestedHsCode ? "ai-suggestion" as const : undefined,
             }))}
             onUpdate={(items) => setEditedItems(items)}
             onNext={() => handleItemsNext(editedItems)}

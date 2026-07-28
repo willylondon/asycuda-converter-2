@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createExtractionProvider } from "@/lib/asycuda/extraction-provider";
+import { createExtractionProvider, AIExtractionError } from "@/lib/asycuda/extraction-provider";
 
 /**
  * POST /api/invoice-to-xml/extract
  *
  * Accepts a multipart file upload (PDF or image) and returns structured
- * invoice extraction data from Kimi K3 (or demo data if no API key).
+ * invoice extraction data from the AI provider chain (Gemini → OpenRouter).
  */
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Validate type
     const allowedTypes = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate size (10 MB)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: "File too large. Maximum 10 MB." }, { status: 400 });
     }
@@ -42,6 +40,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Extraction error:", error);
+
+    if (error instanceof AIExtractionError) {
+      const { code, retryable, retryAfter } = error.toResponse();
+      return NextResponse.json(
+        {
+          error: retryable
+            ? "Invoice processing is temporarily unavailable."
+            : error.message,
+          code,
+          retryable,
+          ...(retryAfter !== undefined ? { retryAfter } : {}),
+        },
+        { status: retryable ? 503 : 422 },
+      );
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Extraction failed" },
       { status: 500 },

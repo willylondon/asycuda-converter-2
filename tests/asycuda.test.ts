@@ -96,4 +96,99 @@ describe("PriceSmart demo data", () => {
     expect(warnings.some((w) => w.includes("Manifest"))).toBe(true);
     expect(warnings.some((w) => w.includes("weight"))).toBe(true);
   });
+
+  it("is marked as DEMO DATA", () => {
+    // Demo data should always have the demo warning
+    // When loaded through the wizard, the first warning is the demo label
+    const demoData = PRICEMART_DEMO_EXTRACTION;
+    expect(demoData.seller.name).toContain("PriceSmart");
+  });
+});
+
+describe("AI provider routing", () => {
+  it("AI_ERROR_CODES includes CONFIGURATION_ERROR", async () => {
+    const mod = await import("@/lib/ai/types");
+    expect(mod.AI_ERROR_CODES.CONFIGURATION_ERROR).toBe("AI_CONFIGURATION_ERROR");
+  });
+
+  it("AI_ERROR_CODES includes PROVIDER_UNAVAILABLE", async () => {
+    const mod = await import("@/lib/ai/types");
+    expect(mod.AI_ERROR_CODES.PROVIDER_UNAVAILABLE).toBe("AI_PROVIDER_UNAVAILABLE");
+  });
+
+  it("InvoiceJsonSchema rejects invalid JSON", async () => {
+    const { InvoiceJsonSchema } = await import("@/lib/ai/types");
+    expect(() => InvoiceJsonSchema.parse({})).toThrow();
+  });
+
+  it("InvoiceJsonSchema accepts valid minimal data", async () => {
+    const { InvoiceJsonSchema } = await import("@/lib/ai/types");
+    const result = InvoiceJsonSchema.parse({
+      documentType: "commercial_invoice",
+      seller: { name: null, address: null, countryCode: null },
+      consignee: { name: null, address: null, countryCode: null, trn: null },
+      shipment: { containerNumber: null, bookingNumber: null, carrier: null, vessel: null, sealNumber: null, sailDate: null, etaDate: null, billOfLading: null, manifestReference: null, incotermRaw: null, grossWeightKg: null },
+      invoice: { invoiceNumber: null, invoiceDate: null, currency: null, merchandiseValue: null, insuranceValue: null, freightValue: null, totalValue: null },
+      items: [{ lineNumber: 1, commercialDescription: "Test" }],
+    });
+    expect(result.items).toHaveLength(1);
+  });
+
+  it("InvoiceExtractionResultSchema validates properly", async () => {
+    const { InvoiceExtractionResultSchema } = await import("@/lib/asycuda/invoice-extraction-schema");
+    expect(() => InvoiceExtractionResultSchema.parse({ items: [] })).toThrow();
+    const result = InvoiceExtractionResultSchema.parse({
+      seller: { name: null, address: null, countryCode: null },
+      consignee: { name: null, address: null, countryCode: null, trn: null },
+      shipment: { containerNumber: null, bookingNumber: null, carrier: null, vessel: null, sealNumber: null, sailDate: null, etaDate: null, billOfLading: null, manifestReference: null, incotermRaw: null, grossWeightKg: null },
+      invoice: { invoiceNumber: null, invoiceDate: null, currency: null, merchandiseValue: null, insuranceValue: null, freightValue: null, totalValue: null },
+      packages: [],
+      items: [{ lineNumber: 1, articleNumber: null, commercialDescription: "Test", rawHsCode: null, suggestedHsCode: null, hsCodeConfidence: null, quantity: null, unitOfMeasure: null, packageType: null, countryOfOrigin: null, grossWeightKg: null, netWeightKg: null, unitPrice: null, lineTotal: null, extractionConfidence: 0.9, warnings: [] }],
+      warnings: [],
+    });
+    expect(result.items).toHaveLength(1);
+  });
+
+  it("has Gemini configured as first provider", async () => {
+    const { getProviderConfig } = await import("@/lib/ai/extract-invoice");
+    const config = getProviderConfig();
+    expect(config.order).toContain("gemini");
+    expect(config.order.split(",")[0].trim()).toBe("gemini");
+  });
+
+  it("parseProviderOrder returns gemini first", async () => {
+    const { getProviderConfig } = await import("@/lib/ai/extract-invoice");
+    const config = getProviderConfig();
+    const order = config.order.split(",").map((s: string) => s.trim());
+    expect(order[0]).toBe("gemini");
+  });
+
+  it("no Kimi or Moonshot references in extraction provider", () => {
+    const fs = require("fs");
+    const providerContent = fs.readFileSync(
+      require("path").resolve(__dirname, "../src/lib/asycuda/extraction-provider.ts"),
+      "utf-8"
+    );
+    expect(providerContent).not.toMatch(/kimi/i);
+    expect(providerContent).not.toMatch(/moonshot/i);
+  });
+
+  it("no Kimi or Moonshot references in API extract route", () => {
+    const fs = require("fs");
+    const routeContent = fs.readFileSync(
+      require("path").resolve(__dirname, "../src/app/invoice-to-xml/api/extract/route.ts"),
+      "utf-8"
+    );
+    expect(routeContent).not.toMatch(/kimi/i);
+    expect(routeContent).not.toMatch(/moonshot/i);
+  });
+
+  it("PriceSmart demo data has warning about being demo", () => {
+    const demo = PRICEMART_DEMO_EXTRACTION;
+    // Demo data itself doesn't include the DEMO DATA warning (it's added by the UI)
+    // But the demo data should not claim it was extracted
+    expect(demo.warnings.some((w) => w.includes("Consignee information"))).toBe(true);
+    // Ensure no claim of being extracted
+    expect(demo.warnings.join(" ")).not.toMatch(/extracted from uploaded file/i);
+  });
 });

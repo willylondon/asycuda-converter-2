@@ -6,8 +6,6 @@
  *  - InvoiceExtractionResult: values extracted from the commercial invoice (AI/OCR)
  */
 
-// ─── Extraction result (matches Kimi K3 output) ───────────────────
-
 export interface ExtractionSeller {
   name: string | null;
   address: string | null;
@@ -80,8 +78,6 @@ export interface InvoiceExtractionResult {
   warnings: string[];
 }
 
-// ─── HS Code ───────────────────────────────────────────────────────
-
 export interface NormalizedHsCode {
   commodityCode: string;
   precision1?: string;
@@ -93,17 +89,13 @@ export interface HsCodeValidation {
   issues: string[];
 }
 
-// ─── Editable item (wizard internal) ──────────────────────────────
-
 export interface EditableLineItem extends ExtractionItem {
   normalizedCommodityCode: string;
   precision: string;
   confirmedHsCode: string | null;
   includeInXml: boolean;
-  hsSource: "invoice" | "kimi-suggestion" | "manual" | "saved-mapping";
+  hsSource: "invoice" | "ai-suggestion" | "manual" | "saved-mapping";
 }
-
-// ─── Validation ────────────────────────────────────────────────────
 
 export type ValidationSeverity = "error" | "warning" | "info";
 
@@ -113,8 +105,6 @@ export interface ValidationFinding {
   field?: string;
   line?: number;
 }
-
-// ─── XML generation ────────────────────────────────────────────────
 
 export interface AsycudaXmlInput {
   declaration: Record<string, unknown>;
