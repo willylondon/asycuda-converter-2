@@ -1,9 +1,6 @@
-import type { InvoiceExtractionResult, ExtractionItem, ExtractionPackage } from "./types";
+import type { InvoiceExtractionResult } from "./types";
 
-/**
- * Pre-built extraction result for PRICEMART.pdf — the PriceSmart commercial invoice.
- * All values match the test fixture spec exactly.
- */
+/** PriceSmart commercial invoice fixture. Values are labeled demo data in the UI. */
 export const PRICEMART_DEMO_EXTRACTION: InvoiceExtractionResult = {
   documentType: "commercial_invoice",
   seller: {
@@ -52,8 +49,10 @@ export const PRICEMART_DEMO_EXTRACTION: InvoiceExtractionResult = {
       suggestedHsCode: null,
       hsCodeConfidence: null,
       quantity: 1,
-      unitOfMeasure: "PCS",
+      unitOfMeasure: "NMB",
       packageType: "PL",
+      packageCount: 1,
+      statisticalQuantity: 1,
       countryOfOrigin: "US",
       grossWeightKg: 453.5147,
       netWeightKg: null,
@@ -70,13 +69,15 @@ export const PRICEMART_DEMO_EXTRACTION: InvoiceExtractionResult = {
       suggestedHsCode: null,
       hsCodeConfidence: null,
       quantity: 10,
-      unitOfMeasure: "PCS",
+      unitOfMeasure: "NMB",
       packageType: "PL",
+      packageCount: 10,
+      statisticalQuantity: 10,
       countryOfOrigin: "CN",
       grossWeightKg: 770.9751,
       netWeightKg: null,
       unitPrice: 617.06,
-      lineTotal: 6170.60,
+      lineTotal: 6170.6,
       extractionConfidence: 0.95,
       warnings: [],
     },
@@ -88,8 +89,10 @@ export const PRICEMART_DEMO_EXTRACTION: InvoiceExtractionResult = {
       suggestedHsCode: null,
       hsCodeConfidence: null,
       quantity: 1,
-      unitOfMeasure: "PCS",
+      unitOfMeasure: "NMB",
       packageType: "PL",
+      packageCount: 1,
+      statisticalQuantity: 1,
       countryOfOrigin: "US",
       grossWeightKg: 68.0272,
       netWeightKg: null,
@@ -106,8 +109,10 @@ export const PRICEMART_DEMO_EXTRACTION: InvoiceExtractionResult = {
       suggestedHsCode: null,
       hsCodeConfidence: null,
       quantity: 6,
-      unitOfMeasure: "PCS",
+      unitOfMeasure: "NMB",
       packageType: "CS",
+      packageCount: 6,
+      statisticalQuantity: 6,
       countryOfOrigin: "US",
       grossWeightKg: 1768.7075,
       netWeightKg: null,
@@ -124,8 +129,10 @@ export const PRICEMART_DEMO_EXTRACTION: InvoiceExtractionResult = {
       suggestedHsCode: null,
       hsCodeConfidence: null,
       quantity: 6,
-      unitOfMeasure: "PCS",
+      unitOfMeasure: "NMB",
       packageType: "PL",
+      packageCount: 6,
+      statisticalQuantity: 6,
       countryOfOrigin: "US",
       grossWeightKg: 816.3265,
       netWeightKg: null,
@@ -142,8 +149,10 @@ export const PRICEMART_DEMO_EXTRACTION: InvoiceExtractionResult = {
       suggestedHsCode: null,
       hsCodeConfidence: null,
       quantity: 1,
-      unitOfMeasure: "PCS",
+      unitOfMeasure: "NMB",
       packageType: "PL",
+      packageCount: 1,
+      statisticalQuantity: 1,
       countryOfOrigin: "US",
       grossWeightKg: 45.3515,
       netWeightKg: null,
@@ -159,6 +168,6 @@ export const PRICEMART_DEMO_EXTRACTION: InvoiceExtractionResult = {
     "Manifest reference is not available.",
     "BL/AWB is not clearly available.",
     "The raw 'C&I' term should not be silently converted to CIF.",
-    "Shipment gross weight (7,802 kg) differs significantly from sum of item weights (~3,923 kg) — requires declarant review.",
+    "Shipment gross weight (7,802 kg) differs significantly from the sum of item weights (~3,923 kg).",
   ],
 };
