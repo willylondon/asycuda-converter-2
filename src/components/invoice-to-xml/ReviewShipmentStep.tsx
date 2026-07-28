@@ -2,208 +2,153 @@
 
 import { useState } from "react";
 import { AlertTriangle, Info } from "lucide-react";
-
-// ─── Types ─────────────────────────────────────────────────────────
-
-interface ShipmentData {
-  seller: { name: string | null; address: string | null; countryCode: string | null };
-  consignee: { name: string | null; address: string | null; countryCode: string | null; trn: string | null };
-  shipment: {
-    containerNumber: string | null; bookingNumber: string | null; carrier: string | null;
-    vessel: string | null; sealNumber: string | null; sailDate: string | null;
-    etaDate: string | null; billOfLading: string | null; manifestReference: string | null;
-    incotermRaw: string | null; grossWeightKg: number | null;
-  };
-  invoice: {
-    invoiceNumber: string | null; invoiceDate: string | null; currency: string | null;
-    merchandiseValue: number | null; insuranceValue: number | null;
-    freightValue: number | null; totalValue: number | null;
-  };
-  packages: Array<{ packageType: string | null; quantity: number | null }>;
-  warnings: string[];
-}
-
-// ─── Props ─────────────────────────────────────────────────────────
+import type { DeclarationDraft } from "@/lib/asycuda/declaration-draft";
 
 interface Props {
-  data: ShipmentData;
-  onUpdate: (data: ShipmentData) => void;
-  onNext: () => void;
+  draft: DeclarationDraft;
+  onContinue: (draft: DeclarationDraft) => void;
   onBack: () => void;
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────
-
-function EditableField({ label, value, onChange, type = "text", className = "" }: {
-  label: string; value: string | number | null; onChange: (v: string) => void; type?: string; className?: string;
+function EditableField({ label, value, onChange, type = "text", wide = false }: {
+  label: string;
+  value: string | number | null;
+  onChange: (value: string) => void;
+  type?: string;
+  wide?: boolean;
 }) {
   return (
-    <div className={className}>
-      <label className="block text-xs font-medium text-text-muted mb-1">{label}</label>
+    <div className={wide ? "sm:col-span-2" : ""}>
+      <label className="mb-1 block text-xs font-medium text-text-muted">{label}</label>
       <input
         type={type}
         value={value ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-text focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
       />
     </div>
   );
 }
 
-// ─── Component ─────────────────────────────────────────────────────
+export function ReviewShipmentStep({ draft, onContinue, onBack }: Props) {
+  const [edited, setEdited] = useState<DeclarationDraft>(() => structuredClone(draft));
 
-export function ReviewShipmentStep({ data, onUpdate, onNext, onBack }: Props) {
-  const [edited, setEdited] = useState(structuredClone(data));
-
-  const update = (section: string, field: string, value: string) => {
-    const next = structuredClone(edited);
-    if (section === "seller" || section === "consignee") {
-      (next[section] as Record<string, unknown>)[field] = value || null;
-    } else if (section === "shipment") {
-      (next.shipment as Record<string, unknown>)[field] = field === "grossWeightKg" ? (value ? parseFloat(value) : null) : (value || null);
-    } else if (section === "invoice") {
-      (next.invoice as Record<string, unknown>)[field] = ["merchandiseValue", "insuranceValue", "freightValue", "totalValue"].includes(field)
-        ? (value ? parseFloat(value) : null)
-        : (value || null);
-    }
-    setEdited(next);
+  const setText = <S extends "seller" | "consignee" | "responsibleParty" | "shipment" | "invoice">(
+    section: S,
+    field: keyof DeclarationDraft[S],
+    value: string,
+  ) => {
+    setEdited((current) => {
+      const next = structuredClone(current);
+      const target = next[section] as Record<string, unknown>;
+      if (section === "shipment" && field === "grossWeightKg") {
+        target[String(field)] = value === "" ? null : Number(value);
+      } else {
+        target[String(field)] = value.trim() === "" ? null : value;
+      }
+      return next;
+    });
   };
 
-  const handleContinue = () => {
-    onUpdate(edited);
-    onNext();
-  };
-
-  const confidence = data.warnings.length === 0 ? "High" : data.warnings.length <= 3 ? "Medium" : "Low";
+  const confidence = edited.warnings.length === 0 ? "High" : edited.warnings.length <= 3 ? "Medium" : "Low";
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-text">Review Extracted Data</h2>
-          <p className="mt-2 text-text-muted">Verify and correct shipment header information.</p>
+          <h2 className="text-2xl font-bold text-text">Review Shipment and Invoice</h2>
+          <p className="mt-2 text-text-muted">Correct every extracted value before reviewing the line items.</p>
         </div>
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
           confidence === "High" ? "bg-success/10 text-success" :
           confidence === "Medium" ? "bg-warning/10 text-warning" : "bg-error/10 text-error"
         }`}>
-          {confidence} confidence • {data.warnings.length} warning{data.warnings.length !== 1 ? "s" : ""}
+          {confidence} confidence · {edited.warnings.length} warning{edited.warnings.length === 1 ? "" : "s"}
         </span>
       </div>
 
-      {/* Warnings */}
-      {data.warnings.length > 0 && (
+      {edited.warnings.length > 0 && (
         <div className="mb-6 rounded-xl border border-warning/30 bg-warning/5 p-4">
-          <div className="flex items-center gap-2 text-warning font-semibold text-sm mb-2">
-            <AlertTriangle className="h-4 w-4" />
-            Extraction Warnings
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-warning">
+            <AlertTriangle className="h-4 w-4" /> Extraction Warnings
           </div>
           <ul className="space-y-1">
-            {data.warnings.map((w, i) => (
-              <li key={i} className="text-sm text-text-muted flex gap-2">
-                <Info className="h-4 w-4 flex-shrink-0 mt-0.5 text-warning/60" />
-                {w}
+            {edited.warnings.map((warning, index) => (
+              <li key={`${warning}-${index}`} className="flex gap-2 text-sm text-text-muted">
+                <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning/60" /> {warning}
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Seller */}
       <fieldset className="mb-6 rounded-xl border border-border bg-surface p-6">
-        <legend className="text-sm font-semibold text-accent px-2">Seller / Exporter</legend>
-        <div className="grid gap-4 sm:grid-cols-2 mt-2">
-          <EditableField label="Name" value={edited.seller.name} onChange={(v) => update("seller", "name", v)} className="sm:col-span-2" />
-          <EditableField label="Address" value={edited.seller.address} onChange={(v) => update("seller", "address", v)} className="sm:col-span-2" />
-          <EditableField label="Country Code" value={edited.seller.countryCode} onChange={(v) => update("seller", "countryCode", v)} />
+        <legend className="px-2 text-sm font-semibold text-accent">Seller / Exporter</legend>
+        <div className="mt-2 grid gap-4 sm:grid-cols-2">
+          <EditableField label="Exporter Name" value={edited.seller.name} onChange={(v) => setText("seller", "name", v)} wide />
+          <EditableField label="Exporter Address" value={edited.seller.address} onChange={(v) => setText("seller", "address", v)} wide />
+          <EditableField label="Exporter Country Code" value={edited.seller.countryCode} onChange={(v) => setText("seller", "countryCode", v.toUpperCase())} />
+          <EditableField label="Exporter Code" value={edited.seller.exporterCode} onChange={(v) => setText("seller", "exporterCode", v)} />
         </div>
       </fieldset>
 
-      {/* Consignee */}
       <fieldset className="mb-6 rounded-xl border border-border bg-surface p-6">
-        <legend className="text-sm font-semibold text-accent px-2">Consignee / Importer</legend>
-        <div className="grid gap-4 sm:grid-cols-2 mt-2">
-          <EditableField label="Name" value={edited.consignee.name} onChange={(v) => update("consignee", "name", v)} className="sm:col-span-2" />
-          <EditableField label="Address" value={edited.consignee.address} onChange={(v) => update("consignee", "address", v)} className="sm:col-span-2" />
-          <EditableField label="Country Code" value={edited.consignee.countryCode} onChange={(v) => update("consignee", "countryCode", v)} />
-          <EditableField label="TRN" value={edited.consignee.trn} onChange={(v) => update("consignee", "trn", v)} />
+        <legend className="px-2 text-sm font-semibold text-accent">Consignee / Importer</legend>
+        <div className="mt-2 grid gap-4 sm:grid-cols-2">
+          <EditableField label="Consignee Name" value={edited.consignee.name} onChange={(v) => setText("consignee", "name", v)} wide />
+          <EditableField label="Consignee Address" value={edited.consignee.address} onChange={(v) => setText("consignee", "address", v)} wide />
+          <EditableField label="Country Code" value={edited.consignee.countryCode} onChange={(v) => setText("consignee", "countryCode", v.toUpperCase())} />
+          <EditableField label="TRN / Code" value={edited.consignee.trn} onChange={(v) => setText("consignee", "trn", v)} />
         </div>
       </fieldset>
 
-      {/* Shipment */}
       <fieldset className="mb-6 rounded-xl border border-border bg-surface p-6">
-        <legend className="text-sm font-semibold text-accent px-2">Shipment Details</legend>
-        <div className="grid gap-4 sm:grid-cols-3 mt-2">
-          <EditableField label="Container Number" value={edited.shipment.containerNumber} onChange={(v) => update("shipment", "containerNumber", v)} />
-          <EditableField label="Booking Number" value={edited.shipment.bookingNumber} onChange={(v) => update("shipment", "bookingNumber", v)} />
-          <EditableField label="Carrier" value={edited.shipment.carrier} onChange={(v) => update("shipment", "carrier", v)} />
-          <EditableField label="Vessel" value={edited.shipment.vessel} onChange={(v) => update("shipment", "vessel", v)} />
-          <EditableField label="Seal Number" value={edited.shipment.sealNumber} onChange={(v) => update("shipment", "sealNumber", v)} />
-          <EditableField label="Sail Date" value={edited.shipment.sailDate} onChange={(v) => update("shipment", "sailDate", v)} />
-          <EditableField label="ETA" value={edited.shipment.etaDate} onChange={(v) => update("shipment", "etaDate", v)} />
-          <EditableField label="Bill of Lading" value={edited.shipment.billOfLading} onChange={(v) => update("shipment", "billOfLading", v)} />
-          <EditableField label="Manifest Ref" value={edited.shipment.manifestReference} onChange={(v) => update("shipment", "manifestReference", v)} />
-          <EditableField label="Incoterm" value={edited.shipment.incotermRaw} onChange={(v) => update("shipment", "incotermRaw", v)} />
-          <EditableField label="Gross Weight (kg)" value={edited.shipment.grossWeightKg} onChange={(v) => update("shipment", "grossWeightKg", v)} type="number" />
+        <legend className="px-2 text-sm font-semibold text-accent">Person / Entity Responsible</legend>
+        <div className="mt-2 grid gap-4 sm:grid-cols-2">
+          <EditableField label="Name" value={edited.responsibleParty.name} onChange={(v) => setText("responsibleParty", "name", v)} />
+          <EditableField label="Code" value={edited.responsibleParty.code} onChange={(v) => setText("responsibleParty", "code", v)} />
         </div>
       </fieldset>
 
-      {/* Invoice */}
       <fieldset className="mb-6 rounded-xl border border-border bg-surface p-6">
-        <legend className="text-sm font-semibold text-accent px-2">Invoice Totals</legend>
-        <div className="grid gap-4 sm:grid-cols-3 mt-2">
-          <EditableField label="Invoice Number" value={edited.invoice.invoiceNumber} onChange={(v) => update("invoice", "invoiceNumber", v)} />
-          <EditableField label="Invoice Date" value={edited.invoice.invoiceDate} onChange={(v) => update("invoice", "invoiceDate", v)} />
-          <EditableField label="Currency" value={edited.invoice.currency} onChange={(v) => update("invoice", "currency", v)} />
-          <EditableField label="Merchandise Value" value={edited.invoice.merchandiseValue} onChange={(v) => update("invoice", "merchandiseValue", v)} type="number" />
-          <EditableField label="Insurance" value={edited.invoice.insuranceValue} onChange={(v) => update("invoice", "insuranceValue", v)} type="number" />
-          <EditableField label="Freight" value={edited.invoice.freightValue} onChange={(v) => update("invoice", "freightValue", v)} type="number" />
-          <EditableField label="Total Value" value={edited.invoice.totalValue} onChange={(v) => update("invoice", "totalValue", v)} type="number" />
+        <legend className="px-2 text-sm font-semibold text-accent">Shipment Details</legend>
+        <div className="mt-2 grid gap-4 sm:grid-cols-3">
+          <EditableField label="Container Number" value={edited.shipment.containerNumber} onChange={(v) => setText("shipment", "containerNumber", v.toUpperCase())} />
+          <EditableField label="Booking Number" value={edited.shipment.bookingNumber} onChange={(v) => setText("shipment", "bookingNumber", v)} />
+          <EditableField label="Carrier" value={edited.shipment.carrier} onChange={(v) => setText("shipment", "carrier", v)} />
+          <EditableField label="Vessel" value={edited.shipment.vessel} onChange={(v) => setText("shipment", "vessel", v)} />
+          <EditableField label="Seal Number" value={edited.shipment.sealNumber} onChange={(v) => setText("shipment", "sealNumber", v)} />
+          <EditableField label="BL / AWB" value={edited.shipment.billOfLading} onChange={(v) => setText("shipment", "billOfLading", v)} />
+          <EditableField label="Manifest Reference" value={edited.shipment.manifestReference} onChange={(v) => setText("shipment", "manifestReference", v)} />
+          <EditableField label="Transport Mode" value={edited.shipment.transportMode} onChange={(v) => setText("shipment", "transportMode", v)} />
+          <EditableField label="Gross Weight (kg)" value={edited.shipment.grossWeightKg} onChange={(v) => setText("shipment", "grossWeightKg", v)} type="number" />
+          <EditableField label="Printed Delivery Term" value={edited.shipment.deliveryTermRaw} onChange={(v) => setText("shipment", "deliveryTermRaw", v)} />
+          <EditableField label="Confirmed ASYCUDA Delivery-Term Code" value={edited.shipment.deliveryTermCode} onChange={(v) => setText("shipment", "deliveryTermCode", v.toUpperCase())} />
+          <EditableField label="Location of Goods" value={edited.shipment.locationOfGoods} onChange={(v) => setText("shipment", "locationOfGoods", v)} />
+          <EditableField label="Border Office Code" value={edited.shipment.borderOfficeCode} onChange={(v) => setText("shipment", "borderOfficeCode", v)} />
+          <EditableField label="Border Office Name" value={edited.shipment.borderOfficeName} onChange={(v) => setText("shipment", "borderOfficeName", v)} />
+          <EditableField label="Place of Loading Code" value={edited.shipment.placeOfLoadingCode} onChange={(v) => setText("shipment", "placeOfLoadingCode", v)} />
+          <EditableField label="Place of Loading Name" value={edited.shipment.placeOfLoadingName} onChange={(v) => setText("shipment", "placeOfLoadingName", v)} wide />
         </div>
       </fieldset>
 
-      {/* Packages */}
       <fieldset className="mb-6 rounded-xl border border-border bg-surface p-6">
-        <legend className="text-sm font-semibold text-accent px-2">Packages</legend>
-        <div className="flex flex-wrap gap-4 mt-2">
-          {edited.packages.map((pkg, i) => (
-            <div key={i} className="flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2">
-              <span className="text-sm font-semibold text-text">{pkg.quantity ?? "?"} ×</span>
-              <input
-                value={pkg.packageType ?? ""}
-                onChange={(e) => {
-                  const next = structuredClone(edited);
-                  next.packages[i].packageType = e.target.value || null;
-                  setEdited(next);
-                }}
-                className="w-16 rounded border border-border bg-background px-2 py-1 text-sm text-text text-center focus:border-accent focus:outline-none"
-                placeholder="Type"
-              />
-              <input
-                type="number"
-                value={pkg.quantity ?? ""}
-                onChange={(e) => {
-                  const next = structuredClone(edited);
-                  next.packages[i].quantity = e.target.value ? parseInt(e.target.value) : null;
-                  setEdited(next);
-                }}
-                className="w-16 rounded border border-border bg-background px-2 py-1 text-sm text-text text-center focus:border-accent focus:outline-none"
-                placeholder="Qty"
-              />
-            </div>
-          ))}
+        <legend className="px-2 text-sm font-semibold text-accent">Invoice Values</legend>
+        <div className="mt-2 grid gap-4 sm:grid-cols-3">
+          <EditableField label="Invoice Number" value={edited.invoice.number} onChange={(v) => setText("invoice", "number", v)} />
+          <EditableField label="Invoice Date" value={edited.invoice.date} onChange={(v) => setText("invoice", "date", v)} />
+          <EditableField label="Currency" value={edited.invoice.currency} onChange={(v) => setText("invoice", "currency", v.toUpperCase())} />
+          <EditableField label="Exchange Rate" value={edited.invoice.exchangeRate} onChange={(v) => setText("invoice", "exchangeRate", v)} type="number" />
+          <EditableField label="Merchandise Value" value={edited.invoice.merchandiseValue} onChange={(v) => setText("invoice", "merchandiseValue", v)} type="number" />
+          <EditableField label="Insurance" value={edited.invoice.insuranceValue} onChange={(v) => setText("invoice", "insuranceValue", v)} type="number" />
+          <EditableField label="Freight" value={edited.invoice.freightValue} onChange={(v) => setText("invoice", "freightValue", v)} type="number" />
+          <EditableField label="Total Value" value={edited.invoice.totalValue} onChange={(v) => setText("invoice", "totalValue", v)} type="number" />
         </div>
       </fieldset>
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-4 border-t border-border">
-        <button onClick={onBack} className="text-sm font-medium text-text-muted hover:text-text transition-colors">
-          ← Back
-        </button>
-        <button
-          onClick={handleContinue}
-          className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-accent px-8 py-3 text-base font-semibold text-white hover:bg-accent-light transition-colors"
-        >
+      <div className="flex justify-between border-t border-border pt-4">
+        <button onClick={onBack} className="min-h-[44px] text-sm font-medium text-text-muted hover:text-text">← Back to Upload</button>
+        <button onClick={() => onContinue(edited)} className="inline-flex min-h-[48px] items-center rounded-xl bg-accent px-8 py-3 font-semibold text-white hover:bg-accent-light">
           Continue to Line Items
         </button>
       </div>
