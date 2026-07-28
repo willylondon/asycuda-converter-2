@@ -185,10 +185,23 @@ describe("ASYCUDA XML generation", () => {
 
   it("keeps major ASYCUDA sections as root-level siblings in order", () => {
     const xml = buildAsycudaXml(createReadyDraft());
-    const order = ["<Property>", "<Identification>", "<Traders>", "<Declarant>", "<General_information>", "<Transport>", "<Financial>", "<Valuation>", "<Item>"];
-    const positions = order.map((tag) => xml.indexOf(tag));
-    expect(positions.every((position) => position >= 0)).toBe(true);
-    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    const rootChildren = Array.from(xml.matchAll(/^  <([A-Za-z0-9_.-]+)>/gm), (match) => match[1]);
+    expect(rootChildren.slice(0, 14)).toEqual([
+      "Export_release",
+      "Assessment_notice",
+      "Property",
+      "Identification",
+      "Traders",
+      "Declarant",
+      "General_information",
+      "Transport",
+      "Financial",
+      "Warehouse",
+      "Transit",
+      "Valuation",
+      "Item",
+      "Item",
+    ]);
   });
 
   it("maps exporter, importer, declarant, commercial reference and Box 40 source", () => {
@@ -221,9 +234,9 @@ describe("ASYCUDA XML generation", () => {
   it("does not copy sample registration, assessment, receipt, tax or root IDs", () => {
     const xml = buildAsycudaXml(createReadyDraft());
     expect(xml).not.toMatch(/<ASYCUDA\s+id=/);
-    expect(xml).not.toMatch(/<Registration>\s*<Serial_number>[^<]+/);
-    expect(xml).not.toMatch(/<Assessment>\s*<Serial_number>[^<]+/);
-    expect(xml).not.toMatch(/<receipt>\s*<Serial_number>[^<]+/);
+    expect(xml).toMatch(/<Registration>[\s\S]*?<Serial_number>\s*<null\/>/);
+    expect(xml).toMatch(/<Assessment>[\s\S]*?<Serial_number>\s*<null\/>/);
+    expect(xml).toMatch(/<receipt>[\s\S]*?<Serial_number>\s*<null\/>/);
     expect(xml).not.toContain("5893622");
   });
 });
