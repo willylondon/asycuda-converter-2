@@ -1,10 +1,8 @@
 import { z } from "zod";
 import type { InvoiceExtractionResult } from "./types";
 
-/**
- * Strict Zod schema for invoice extraction validation.
- * Every provider response must pass this before being returned to the client.
- */
+const nullableFiniteNumber = z.number().finite().nullable();
+
 export const InvoiceExtractionResultSchema = z.object({
   documentType: z.enum(["commercial_invoice", "packing_list", "unknown"]).default("commercial_invoice"),
   seller: z.object({
@@ -29,52 +27,50 @@ export const InvoiceExtractionResultSchema = z.object({
     billOfLading: z.string().nullable(),
     manifestReference: z.string().nullable(),
     incotermRaw: z.string().nullable(),
-    grossWeightKg: z.number().nullable(),
+    grossWeightKg: nullableFiniteNumber,
   }),
   invoice: z.object({
     invoiceNumber: z.string().nullable(),
     invoiceDate: z.string().nullable(),
     currency: z.string().nullable(),
-    merchandiseValue: z.number().nullable(),
-    insuranceValue: z.number().nullable(),
-    freightValue: z.number().nullable(),
-    totalValue: z.number().nullable(),
+    merchandiseValue: nullableFiniteNumber,
+    insuranceValue: nullableFiniteNumber,
+    freightValue: nullableFiniteNumber,
+    totalValue: nullableFiniteNumber,
   }),
   packages: z.array(z.object({
     packageType: z.string().nullable(),
-    quantity: z.number().nullable(),
+    quantity: nullableFiniteNumber,
   })),
   items: z.array(z.object({
     lineNumber: z.number().int().positive(),
     articleNumber: z.string().nullable(),
-    commercialDescription: z.string(),
+    commercialDescription: z.string().min(1),
     rawHsCode: z.string().nullable(),
     suggestedHsCode: z.string().nullable(),
     hsCodeConfidence: z.number().min(0).max(1).nullable(),
-    quantity: z.number().nullable(),
+    quantity: nullableFiniteNumber,
     unitOfMeasure: z.string().nullable(),
     packageType: z.string().nullable(),
+    packageCount: nullableFiniteNumber,
+    statisticalQuantity: nullableFiniteNumber,
     countryOfOrigin: z.string().nullable(),
-    grossWeightKg: z.number().nullable(),
-    netWeightKg: z.number().nullable(),
-    unitPrice: z.number().nullable(),
-    lineTotal: z.number().nullable(),
+    grossWeightKg: nullableFiniteNumber,
+    netWeightKg: nullableFiniteNumber,
+    unitPrice: nullableFiniteNumber,
+    lineTotal: nullableFiniteNumber,
     extractionConfidence: z.number().min(0).max(1),
     warnings: z.array(z.string()),
   })).min(1, "At least one invoice item is required"),
   warnings: z.array(z.string()),
 });
 
-/**
- * Validates raw AI output against the strict invoice schema.
- * Returns the validated result or throws with clear error messages.
- */
 export function validateInvoiceExtraction(raw: unknown): InvoiceExtractionResult {
   try {
     return InvoiceExtractionResultSchema.parse(raw) as InvoiceExtractionResult;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const issues = error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
+      const issues = error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
       throw new Error(`Invoice extraction validation failed: ${issues}`);
     }
     throw error;
