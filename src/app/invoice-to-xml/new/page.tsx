@@ -8,11 +8,11 @@ import { ReviewItemsStep } from "@/components/invoice-to-xml/ReviewItemsStep";
 import { ReviewShipmentStep } from "@/components/invoice-to-xml/ReviewShipmentStep";
 import { ValidationStep } from "@/components/invoice-to-xml/ValidationStep";
 import { XmlPreviewStep } from "@/components/invoice-to-xml/XmlPreviewStep";
+import { createExtractionDraft } from "@/lib/asycuda/create-extraction-draft";
 import { PRICEMART_DEMO_EXTRACTION } from "@/lib/asycuda/demo-data";
 import {
   applyDeclarationDetails,
   createBlankDeclarationDraft,
-  createDraftFromExtraction,
   declarationDetailsFromDraft,
   type DeclarationDraft,
 } from "@/lib/asycuda/declaration-draft";
@@ -70,7 +70,7 @@ export default function NewDeclarationPage() {
         {step === 2 && (
           <InvoiceUploadStep
             onExtracted={(result: InvoiceExtractionResult) => {
-              setDraft((current) => createDraftFromExtraction(result, current, "ai"));
+              setDraft((current) => createExtractionDraft(result, current, "ai"));
               setStep(3);
             }}
             onSkip={() => {
@@ -80,7 +80,7 @@ export default function NewDeclarationPage() {
             onLoadDemo={() => {
               const demo = PRICEMART_DEMO_EXTRACTION as InvoiceExtractionResult;
               setDraft((current) => {
-                const next = createDraftFromExtraction(demo, current, "demo");
+                const next = createExtractionDraft(demo, current, "demo");
                 next.warnings = [
                   "DEMO DATA — NOT EXTRACTED FROM AN UPLOADED FILE",
                   ...next.warnings,
