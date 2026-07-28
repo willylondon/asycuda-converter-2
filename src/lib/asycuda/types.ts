@@ -92,6 +92,10 @@ export interface HsCodeValidation {
 export interface EditableLineItem extends ExtractionItem {
   normalizedCommodityCode: string;
   precision: string;
+  precision1: string | null;
+  precision2: string | null;
+  precision3: string | null;
+  precision4: string | null;
   confirmedHsCode: string | null;
   includeInXml: boolean;
   hsSource: "invoice" | "ai-suggestion" | "manual" | "saved-mapping";

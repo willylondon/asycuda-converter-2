@@ -122,7 +122,7 @@ export function XmlPreviewStep({ declarationData, items, onRestart }: Props) {
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-sm font-semibold text-warning">
             <AlertTriangle className="h-4 w-4" />
-            TEST XML — REQUIRES DECLARANT VERIFICATION
+            TEST ASYCUDA XML — IMPORT COMPATIBILITY NOT YET VERIFIED
           </span>
         )}
       </div>

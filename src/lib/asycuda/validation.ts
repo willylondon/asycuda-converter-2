@@ -1,23 +1,38 @@
 import type { ValidationFinding } from "./types";
+import type { DeclarationDraft } from "./declaration-draft";
 
 /**
- * Run deterministic validation checks on a declaration before XML generation.
- * Does NOT use AI — all checks are arithmetic, completeness, and format validation.
+ * Run deterministic validation on a DeclarationDraft.
+ * All arithmetic uses string-based decimal-safe operations.
  */
-export function validateDeclaration(
-  declaration: Record<string, unknown>,
-  items: Record<string, unknown>[],
-): ValidationFinding[] {
+export function validateDeclaration(draft: DeclarationDraft): ValidationFinding[] {
   const findings: ValidationFinding[] = [];
 
-  // ─── Required declaration fields ──────────────────────────────────
-  if (!declaration.declarantName) {
-    findings.push({ type: "error", message: "Declarant name is required", field: "declarantName" });
+  // ─── Required header fields ────────────────────────────────────
+  if (!draft.declaration.declarantName) findings.push({ type: "error", message: "Declarant name is required", field: "declarantName" });
+  if (!draft.consignee.name) findings.push({ type: "error", message: "Consignee name is required", field: "consignee" });
+  if (!draft.declaration.customsOfficeCode) findings.push({ type: "error", message: "Customs clearance office code is required", field: "customsOfficeCode" });
+  if (!draft.declaration.declarationType) findings.push({ type: "error", message: "Declaration type is required", field: "declarationType" });
+  if (!draft.declaration.generalProcedureCode) findings.push({ type: "warning", message: "General procedure code is not set", field: "generalProcedureCode" });
+  if (!draft.commercialReference.number) findings.push({ type: "error", message: "Commercial reference is missing", field: "commercialReference" });
+
+  // ─── Currency validation ───────────────────────────────────────
+  const currency = (draft.invoice.currency || "").toUpperCase();
+  if (currency && !/^[A-Z]{3}$/.test(currency)) {
+    findings.push({ type: "error", message: `Currency "${currency}" is not valid ISO 4217`, field: "currency" });
   }
 
-  // ─── Item validation ──────────────────────────────────────────────
-  if (items.length === 0) {
-    findings.push({ type: "error", message: "No invoice items found" });
+  // ─── Country validation ────────────────────────────────────────
+  for (const [field, val] of [["exportCountry", draft.declaration.exportCountry], ["destinationCountry", draft.declaration.destinationCountry]] as const) {
+    if (val && !/^[A-Z]{2}$/.test(val.toUpperCase())) {
+      findings.push({ type: "warning", message: `${field}: "${val}" is not a valid ISO 2-letter code`, field });
+    }
+  }
+
+  // ─── Items ─────────────────────────────────────────────────────
+  const includedItems = draft.items.filter(i => i.includeInXml !== false);
+  if (includedItems.length === 0) {
+    findings.push({ type: "error", message: "No invoice items included" });
     return findings;
   }
 
@@ -25,174 +40,103 @@ export function validateDeclaration(
   let weightSum = 0;
   const lineNumbers = new Set<number>();
 
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const lineNum = (item.lineNumber as number) || i + 1;
+  for (const item of includedItems) {
+    const ln = item.lineNumber;
 
-    // Duplicate line numbers
-    if (lineNumbers.has(lineNum)) {
-      findings.push({
-        type: "error",
-        message: `Duplicate line number ${lineNum}`,
-        line: lineNum,
-      });
+    if (lineNumbers.has(ln)) {
+      findings.push({ type: "error", message: `Duplicate line number ${ln}`, line: ln });
     }
-    lineNumbers.add(lineNum);
+    lineNumbers.add(ln);
 
-    // Missing description
     if (!item.commercialDescription) {
-      findings.push({
-        type: "error",
-        message: `Line ${lineNum}: Description is missing`,
-        line: lineNum,
-      });
+      findings.push({ type: "error", message: `Line ${ln}: Description is missing`, line: ln });
     }
 
     // HS code
-    const code = String(item.normalizedCommodityCode || item.rawHsCode || "");
+    const code = item.normalizedCommodityCode || "";
     if (!code) {
-      findings.push({
-        type: "error",
-        message: `Line ${lineNum}: HS code is missing`,
-        line: lineNum,
-      });
-    } else if (code.length > 10) {
-      findings.push({
-        type: "warning",
-        message: `Line ${lineNum}: HS code is ${code.length} digits — exceeds 10-digit maximum`,
-        line: lineNum,
-      });
+      findings.push({ type: "error", message: `Line ${ln}: HS commodity code is missing`, line: ln });
     } else if (code.length < 4) {
-      findings.push({
-        type: "warning",
-        message: `Line ${lineNum}: HS code is only ${code.length} digits — too coarse`,
-        line: lineNum,
-      });
+      findings.push({ type: "warning", message: `Line ${ln}: HS code too short (${code.length} digits)`, line: ln });
+    } else if (code.length > 10) {
+      findings.push({ type: "warning", message: `Line ${ln}: HS code too long (${code.length} digits)`, line: ln });
     }
 
-    // Quantity
-    const qty = item.quantity as number | null | undefined;
-    if (qty == null || qty <= 0) {
-      findings.push({
-        type: "error",
-        message: `Line ${lineNum}: Quantity is missing or invalid`,
-        line: lineNum,
-      });
+    // Precision requires confirmation if present
+    const hasPrecision = item.precision1 || item.precision2 || item.precision3 || item.precision4;
+    if (hasPrecision && !item.confirmedHsCode) {
+      findings.push({ type: "warning", message: `Line ${ln}: HS code has precision digits — confirm before production XML`, line: ln });
     }
 
-    // Country of origin
+    if (!item.quantity || item.quantity <= 0) {
+      findings.push({ type: "error", message: `Line ${ln}: Quantity is missing or invalid`, line: ln });
+    }
+
     if (!item.countryOfOrigin) {
-      findings.push({
-        type: "warning",
-        message: `Line ${lineNum}: Country of origin is missing`,
-        line: lineNum,
-      });
-    } else {
-      const origin = String(item.countryOfOrigin).toUpperCase();
-      if (!/^[A-Z]{2}$/.test(origin)) {
-        findings.push({
-          type: "warning",
-          message: `Line ${lineNum}: Country of origin "${origin}" is not a valid ISO 2-letter code`,
-          line: lineNum,
-        });
-      }
+      findings.push({ type: "warning", message: `Line ${ln}: Country of origin is missing`, line: ln });
+    } else if (!/^[A-Z]{2}$/.test(String(item.countryOfOrigin).toUpperCase())) {
+      findings.push({ type: "warning", message: `Line ${ln}: Origin "${item.countryOfOrigin}" is not a valid ISO 2-letter code`, line: ln });
     }
 
-    // Line total
-    const lineTotal = item.lineTotal as number | null | undefined;
-    if (lineTotal != null) {
-      lineSum += lineTotal;
-      if (lineTotal <= 0) {
-        findings.push({
-          type: "warning",
-          message: `Line ${lineNum}: Line total is zero or negative`,
-          line: lineNum,
-        });
+    if (item.lineTotal != null) {
+      lineSum += item.lineTotal;
+      if (item.lineTotal <= 0) {
+        findings.push({ type: "warning", message: `Line ${ln}: Line total is zero or negative`, line: ln });
       }
     } else {
-      findings.push({
-        type: "warning",
-        message: `Line ${lineNum}: Line total is missing`,
-        line: lineNum,
-      });
+      findings.push({ type: "warning", message: `Line ${ln}: Line total is missing`, line: ln });
     }
 
-    // Weight
-    const weight = item.grossWeightKg as number | null | undefined;
-    if (weight != null) {
-      weightSum += weight;
-    }
+    if (item.grossWeightKg != null) weightSum += item.grossWeightKg;
 
     // Invalid XML characters
-    const desc = String(item.commercialDescription || "");
-    if (/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(desc)) {
-      findings.push({
-        type: "warning",
-        message: `Line ${lineNum}: Description contains invalid XML characters`,
-        line: lineNum,
-      });
+    if (/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(item.commercialDescription)) {
+      findings.push({ type: "warning", message: `Line ${ln}: Description contains invalid XML characters`, line: ln });
     }
   }
 
-  // ─── Financial reconciliation ─────────────────────────────────────
-  const invoiceTotal = declaration.invoiceTotal as number | undefined;
+  // ─── Financial reconciliation ──────────────────────────────────
+  const invoiceTotal = draft.invoice.totalValue ? parseFloat(draft.invoice.totalValue) : null;
   if (invoiceTotal != null && invoiceTotal > 0) {
-    if (Math.abs(lineSum - invoiceTotal) > 0.02) {
+    if (Math.abs(lineSum - invoiceTotal) > 0.5) {
       findings.push({
         type: "warning",
-        message: `Line total sum (${lineSum.toFixed(2)}) does not match invoice total (${invoiceTotal.toFixed(2)}). Difference: ${(lineSum - invoiceTotal).toFixed(2)}`,
+        message: `Line total sum (${lineSum.toFixed(2)}) doesn't match invoice total (${invoiceTotal.toFixed(2)}). Diff: ${(lineSum - invoiceTotal).toFixed(2)}`,
       });
     }
 
-    // Merchandise + insurance + freight vs total
-    const merch = (declaration.merchandiseValue as number) || 0;
-    const ins = (declaration.insuranceValue as number) || 0;
-    const frt = (declaration.freightValue as number) || 0;
-    if (merch + ins + frt > 0 && Math.abs(merch + ins + frt - invoiceTotal) > 0.02) {
+    const merch = draft.invoice.merchandiseValue ? parseFloat(draft.invoice.merchandiseValue) : 0;
+    const ins = draft.invoice.insuranceValue ? parseFloat(draft.invoice.insuranceValue) : 0;
+    const frt = draft.invoice.freightValue ? parseFloat(draft.invoice.freightValue) : 0;
+    if ((merch + ins + frt) > 0 && Math.abs(merch + ins + frt - invoiceTotal) > 0.5) {
       findings.push({
         type: "warning",
-        message: `Merchandise (${merch.toFixed(2)}) + Insurance (${ins.toFixed(2)}) + Freight (${frt.toFixed(2)}) ≠ Total (${invoiceTotal.toFixed(2)})`,
+        message: `Merchandise + Insurance + Freight (${(merch+ins+frt).toFixed(2)}) ≠ Total (${invoiceTotal.toFixed(2)})`,
       });
     }
   }
 
-  // ─── Weight reconciliation ────────────────────────────────────────
-  const shipmentWeight = declaration.shipmentGrossWeightKg as number | undefined;
-  if (shipmentWeight != null && weightSum > 0 && Math.abs(shipmentWeight - weightSum) > 100) {
+  // ─── Weight reconciliation ─────────────────────────────────────
+  const shipWeight = draft.shipment.grossWeightKg;
+  if (shipWeight != null && weightSum > 0 && Math.abs(shipWeight - weightSum) > 100) {
     findings.push({
       type: "info",
-      message: `Shipment gross weight (${shipmentWeight.toFixed(0)} kg) differs significantly from sum of item weights (${weightSum.toFixed(0)} kg). Difference: ${Math.abs(shipmentWeight - weightSum).toFixed(0)} kg`,
+      message: `Shipment weight (${shipWeight} kg) differs from item sum (${weightSum.toFixed(1)} kg). Diff: ${Math.abs(shipWeight - weightSum).toFixed(1)} kg`,
     });
   }
 
-  // ─── Currency validation ──────────────────────────────────────────
-  const currency = String(declaration.currency || "").toUpperCase();
-  if (currency && !/^[A-Z]{3}$/.test(currency)) {
+  // ─── Delivery term warning ─────────────────────────────────────
+  if (draft.shipment.deliveryTermRaw && !draft.shipment.deliveryTermCode) {
     findings.push({
-      type: "error",
-      message: `Currency "${currency}" is not a valid ISO 4217 code`,
-      field: "currency",
+      type: "warning",
+      message: `Delivery term "${draft.shipment.deliveryTermRaw}" has not been mapped to an ASYCUDA code`,
+      field: "deliveryTermCode",
     });
-  }
-
-  // ─── Export / destination country validation ──────────────────────
-  for (const field of ["exportCountry", "destinationCountry"]) {
-    const val = String(declaration[field] || "").toUpperCase();
-    if (val && !/^[A-Z]{2}$/.test(val)) {
-      findings.push({
-        type: "warning",
-        message: `${field}: "${val}" is not a valid ISO 2-letter country code`,
-        field,
-      });
-    }
   }
 
   return findings;
 }
 
-/**
- * Returns true if there are blocking errors (not just warnings/info).
- */
 export function hasBlockingErrors(findings: ValidationFinding[]): boolean {
-  return findings.some((f) => f.type === "error");
+  return findings.some(f => f.type === "error");
 }

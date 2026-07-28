@@ -40,27 +40,34 @@ describe("HS Code normalization", () => {
 });
 
 describe("Validation", () => {
+  const makeMockDraft = (overrides: any = {}) => ({
+    declaration: { declarantName: "", declarantCode: null, declarantRepresentative: null, regimeType: null, declarationType: null, generalProcedureCode: null, extendedProcedure: null, nationalProcedure: null, customsOfficeCode: null, customsOfficeName: null, borderOfficeCode: null, borderOfficeName: null, locationOfGoods: null, exportCountry: null, exportCountryName: null, destinationCountry: null, destinationCountryName: null, defaultCountryOfOrigin: null, currency: null, exchangeRate: null, totalPackages: null, packageCode: null, packageName: null, marksAndNumbers: null, containerNumber: null, containerFlag: false, transportMode: null, placeOfLoadingCode: null, placeOfLoadingName: null, deliveryTermCode: null, deliveryTermRaw: null, deferredPaymentRef: null, modeOfPayment: null },
+    consignee: { name: "", address: null, countryCode: null, trn: null },
+    seller: { name: null, address: null, countryCode: null, exporterCode: null },
+    responsibleParty: { name: null, code: null },
+    shipment: { vessel: null, carrier: null, containerNumber: null, sealNumber: null, bookingNumber: null, billOfLading: null, manifestReference: null, transportMode: null, borderOfficeCode: null, borderOfficeName: null, placeOfLoadingCode: null, placeOfLoadingName: null, locationOfGoods: null, deliveryTermRaw: null, deliveryTermCode: null, grossWeightKg: null },
+    invoice: { number: null, date: null, currency: null, exchangeRate: null, merchandiseValue: null, freightValue: null, insuranceValue: null, totalValue: null },
+    commercialReference: { year: "2026", number: "INV001" },
+    items: [],
+    source: "manual" as const,
+    ...overrides,
+  });
+
   it("rejects empty items", () => {
-    const findings = validateDeclaration({ declarantName: "Test Broker" }, []);
+    const draft = makeMockDraft({ declaration: { declarantName: "Test Broker" }, consignee: { name: "Test" } });
+    const findings = validateDeclaration(draft);
     expect(hasBlockingErrors(findings)).toBe(true);
     expect(findings.some((f) => f.message.includes("No invoice items"))).toBe(true);
   });
 
   it("flags missing HS codes", () => {
-    const findings = validateDeclaration(
-      { declarantName: "Test" },
-      [
-        {
-          lineNumber: 1,
-          commercialDescription: "Test item",
-          quantity: 1,
-          lineTotal: 100,
-          countryOfOrigin: "US",
-          normalizedCommodityCode: "",
-        },
-      ],
-    );
-    expect(findings.some((f) => f.message.includes("HS code is missing"))).toBe(true);
+    const draft = makeMockDraft({
+      declaration: { declarantName: "Test" },
+      consignee: { name: "TestConsignee" },
+      items: [{ lineNumber: 1, commercialDescription: "Test item", quantity: 1, lineTotal: 100, countryOfOrigin: "US", normalizedCommodityCode: "", includeInXml: true }],
+    });
+    const findings = validateDeclaration(draft);
+    expect(findings.some((f) => f.message.includes("HS commodity code is missing"))).toBe(true);
   });
 });
 

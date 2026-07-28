@@ -125,8 +125,9 @@ export default function InvoiceToXmlLanding() {
               <AlertTriangle aria-hidden="true" className="h-8 w-8 text-warning" />
               <h3 className="mt-4 text-lg font-semibold text-text">Test Mode</h3>
               <p className="mt-2 text-sm leading-relaxed text-text-muted">
-                This is an MVP. Tax calculations are not included. AI extraction requires a Gemini API key.
+                This is an early-stage test tool. AI extraction requires a Gemini API key.
                 Without it, use the PriceSmart demo to test the full workflow.
+                Tax calculations are not included. Generated XML is for verification purposes only.
               </p>
             </div>
           </div>
