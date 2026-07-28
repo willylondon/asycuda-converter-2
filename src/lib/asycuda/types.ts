@@ -1,10 +1,4 @@
-/**
- * Shared types for the ASYCUDA invoice-to-XML service.
- *
- * These types model:
- *  - DeclarationData: the user-confirmed customs declaration form data
- *  - InvoiceExtractionResult: values extracted from the commercial invoice (AI/OCR)
- */
+/** Shared types for the Invoice-to-ASYCUDA workflow. */
 
 export interface ExtractionSeller {
   name: string | null;
@@ -82,6 +76,8 @@ export interface NormalizedHsCode {
   commodityCode: string;
   precision1?: string;
   precision2?: string;
+  precision3?: string;
+  precision4?: string;
 }
 
 export interface HsCodeValidation {
@@ -90,15 +86,22 @@ export interface HsCodeValidation {
 }
 
 export interface EditableLineItem extends ExtractionItem {
+  /** Confirmed ASYCUDA commodity-code portion, normally eight digits. */
   normalizedCommodityCode: string;
+  /** Full remainder retained for display and audit. */
   precision: string;
   precision1: string | null;
   precision2: string | null;
   precision3: string | null;
   precision4: string | null;
   confirmedHsCode: string | null;
+  hsConfirmed: boolean;
   includeInXml: boolean;
   hsSource: "invoice" | "ai-suggestion" | "manual" | "saved-mapping";
+  /** Number of packages for this item; never inferred from product quantity. */
+  packageCount: number | null;
+  /** Statistical/supplementary quantity for Box 41. */
+  statisticalQuantity: number | null;
 }
 
 export type ValidationSeverity = "error" | "warning" | "info";
@@ -108,11 +111,6 @@ export interface ValidationFinding {
   message: string;
   field?: string;
   line?: number;
-}
-
-export interface AsycudaXmlInput {
-  declaration: Record<string, unknown>;
-  items: Record<string, unknown>[];
 }
 
 export type ExportXmlStatus = "clean" | "warnings" | "errors";
