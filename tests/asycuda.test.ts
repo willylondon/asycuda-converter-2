@@ -1,201 +1,256 @@
-import { describe, it, expect } from "vitest";
-import { normalizeHsCode, validateHsCode, stripHsCodeFormatting } from "@/lib/asycuda/hs-code";
-import { validateDeclaration, hasBlockingErrors } from "@/lib/asycuda/validation";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { XMLParser } from "fast-xml-parser";
+import { describe, expect, it } from "vitest";
+import { buildAsycudaXml } from "@/lib/asycuda/build-asycuda-xml";
+import { createExtractionDraft } from "@/lib/asycuda/create-extraction-draft";
+import {
+  createBlankDeclarationDraft,
+  type DeclarationDraft,
+} from "@/lib/asycuda/declaration-draft";
+import { formatMinorUnits, sumMinorUnits, toMinorUnits } from "@/lib/asycuda/decimal";
 import { PRICEMART_DEMO_EXTRACTION } from "@/lib/asycuda/demo-data";
+import { normalizeHsCode, stripHsCodeFormatting, validateHsCode } from "@/lib/asycuda/hs-code";
+import { hasBlockingErrors, validateDeclaration } from "@/lib/asycuda/validation";
 
-describe("HS Code normalization", () => {
-  it("strips spaces and periods", () => {
+function createReadyDraft(): DeclarationDraft {
+  const base = createBlankDeclarationDraft();
+  base.declaration = {
+    ...base.declaration,
+    declarantName: "Kingston Customs Brokers & Sons",
+    declarantCode: "001234567",
+    declarantRepresentative: "Marcus Reid",
+    regimeType: "IM4",
+    declarationType: "SAD",
+    generalProcedureCode: "4000",
+    extendedProcedure: "4000",
+    nationalProcedure: "21",
+    customsOfficeCode: "JMKIN01",
+    customsOfficeName: "Kingston <Clearance> Office",
+    borderOfficeCode: "JMKIN01",
+    borderOfficeName: "Kingston Port",
+    locationOfGoods: "KINGSTON CONTAINER TERMINAL",
+    exportCountry: "US",
+    exportCountryName: "United States",
+    destinationCountry: "JM",
+    destinationCountryName: "Jamaica",
+    defaultCountryOfOrigin: "US",
+    currency: "USD",
+    exchangeRate: "156.50",
+    totalPackages: 25,
+    packageCode: "PL",
+    packageName: "Pallet",
+    marksAndNumbers: "PRICESMART & JAMAICA",
+    containerNumber: "SMLU7871623",
+    containerFlag: true,
+    transportMode: "1",
+    placeOfLoadingCode: "USPEF",
+    placeOfLoadingName: "Port Everglades",
+    deliveryTermCode: "CNI",
+    deliveryTermRaw: "C&I (Cost & Insurance)",
+    modeOfPayment: "D",
+  };
+  base.consignee = {
+    name: "PriceSmart Jamaica Ltd",
+    address: "Kingston, Jamaica",
+    countryCode: "JM",
+    trn: "002345678",
+  };
+  base.responsibleParty = { name: "PriceSmart Jamaica Ltd", code: "002345678" };
+  base.shipment = {
+    ...base.shipment,
+    billOfLading: "SEAB2407123",
+    manifestReference: "MAN-2026-07891",
+    transportMode: "1",
+    borderOfficeCode: "JMKIN01",
+    borderOfficeName: "Kingston Port",
+    placeOfLoadingCode: "USPEF",
+    placeOfLoadingName: "Port Everglades",
+    locationOfGoods: "KINGSTON CONTAINER TERMINAL",
+    deliveryTermRaw: "C&I (Cost & Insurance)",
+    deliveryTermCode: "CNI",
+  };
+
+  const draft = createExtractionDraft(PRICEMART_DEMO_EXTRACTION, base, "demo");
+  draft.invoice.exchangeRate = "156.50";
+  draft.items = draft.items.map((item) => ({
+    ...item,
+    hsConfirmed: true,
+    confirmedHsCode: `${item.normalizedCommodityCode}${item.precision1 ?? ""}${item.precision2 ?? ""}${item.precision3 ?? ""}${item.precision4 ?? ""}`,
+  }));
+  return draft;
+}
+
+describe("HS-code handling", () => {
+  it("preserves every printed digit", () => {
     expect(stripHsCodeFormatting("8303.00.00.0")).toBe("830300000");
-  });
-
-  it("preserves all digits", () => {
     const result = normalizeHsCode("9403.60.90.0");
-    expect(result).not.toBeNull();
-    expect(result!.commodityCode).toBe("94036090");
-    expect(result!.precision1).toBe("0");
+    expect(result?.commodityCode).toBe("94036090");
+    expect(result?.precision1).toBe("0");
   });
 
-  it("handles 8-digit codes", () => {
+  it("keeps eight-digit codes without inventing precision", () => {
     const result = normalizeHsCode("8303.00.00");
-    expect(result).not.toBeNull();
-    expect(result!.commodityCode).toBe("83030000");
-    expect(result!.precision1).toBeUndefined();
+    expect(result?.commodityCode).toBe("83030000");
+    expect(result?.precision1).toBeUndefined();
   });
 
-  it("flags ambiguous 9-digit codes", () => {
+  it("flags a raw nine-digit code as ambiguous until reviewed", () => {
     const validation = validateHsCode("830300000");
     expect(validation.valid).toBe(false);
-    expect(validation.issues.some((i) => i.includes("ambiguous"))).toBe(true);
+    expect(validation.issues.some((issue) => issue.includes("ambiguous"))).toBe(true);
   });
 
-  it("rejects non-digit content", () => {
-    const validation = validateHsCode("ABC123");
-    expect(validation.valid).toBe(false);
-  });
-
-  it("accepts valid 8-digit codes", () => {
-    const validation = validateHsCode("94036090");
-    expect(validation.valid).toBe(true);
+  it("rejects non-numeric content", () => {
+    expect(validateHsCode("ABC123").valid).toBe(false);
   });
 });
 
-describe("Validation", () => {
-  const makeMockDraft = (overrides: any = {}) => ({
-    declaration: { declarantName: "", declarantCode: null, declarantRepresentative: null, regimeType: null, declarationType: null, generalProcedureCode: null, extendedProcedure: null, nationalProcedure: null, customsOfficeCode: null, customsOfficeName: null, borderOfficeCode: null, borderOfficeName: null, locationOfGoods: null, exportCountry: null, exportCountryName: null, destinationCountry: null, destinationCountryName: null, defaultCountryOfOrigin: null, currency: null, exchangeRate: null, totalPackages: null, packageCode: null, packageName: null, marksAndNumbers: null, containerNumber: null, containerFlag: false, transportMode: null, placeOfLoadingCode: null, placeOfLoadingName: null, deliveryTermCode: null, deliveryTermRaw: null, deferredPaymentRef: null, modeOfPayment: null },
-    consignee: { name: "", address: null, countryCode: null, trn: null },
-    seller: { name: null, address: null, countryCode: null, exporterCode: null },
-    responsibleParty: { name: null, code: null },
-    shipment: { vessel: null, carrier: null, containerNumber: null, sealNumber: null, bookingNumber: null, billOfLading: null, manifestReference: null, transportMode: null, borderOfficeCode: null, borderOfficeName: null, placeOfLoadingCode: null, placeOfLoadingName: null, locationOfGoods: null, deliveryTermRaw: null, deliveryTermCode: null, grossWeightKg: null },
-    invoice: { number: null, date: null, currency: null, exchangeRate: null, merchandiseValue: null, freightValue: null, insuranceValue: null, totalValue: null },
-    commercialReference: { year: "2026", number: "INV001" },
-    items: [],
-    source: "manual" as const,
-    ...overrides,
+describe("decimal-safe arithmetic", () => {
+  it("reconciles the PriceSmart line totals exactly", () => {
+    const total = sumMinorUnits(PRICEMART_DEMO_EXTRACTION.items.map((item) => item.lineTotal));
+    expect(formatMinorUnits(total)).toBe("80779.46");
+    expect(total).toBe(toMinorUnits("80779.46"));
   });
 
-  it("rejects empty items", () => {
-    const draft = makeMockDraft({ declaration: { declarantName: "Test Broker" }, consignee: { name: "Test" } });
+  it("rounds decimal input to minor units without floating-point addition", () => {
+    expect(toMinorUnits("10.005")).toBe(1001n);
+    expect(formatMinorUnits(1001n)).toBe("10.01");
+  });
+});
+
+describe("declaration validation", () => {
+  it("blocks a declaration with no included items", () => {
+    const draft = createReadyDraft();
+    draft.items = [];
     const findings = validateDeclaration(draft);
     expect(hasBlockingErrors(findings)).toBe(true);
-    expect(findings.some((f) => f.message.includes("No invoice items"))).toBe(true);
+    expect(findings.some((finding) => finding.message.includes("At least one invoice item"))).toBe(true);
   });
 
-  it("flags missing HS codes", () => {
-    const draft = makeMockDraft({
-      declaration: { declarantName: "Test" },
-      consignee: { name: "TestConsignee" },
-      items: [{ lineNumber: 1, commercialDescription: "Test item", quantity: 1, lineTotal: 100, countryOfOrigin: "US", normalizedCommodityCode: "", includeInXml: true }],
-    });
+  it("blocks an unconfirmed HS code", () => {
+    const draft = createReadyDraft();
+    draft.items[0].hsConfirmed = false;
+    draft.items[0].confirmedHsCode = null;
     const findings = validateDeclaration(draft);
-    expect(findings.some((f) => f.message.includes("HS commodity code is missing"))).toBe(true);
+    expect(findings.some((finding) => finding.message.includes("reviewed and confirmed"))).toBe(true);
+  });
+
+  it("blocks missing package quantity instead of copying product quantity", () => {
+    const draft = createReadyDraft();
+    draft.items[0].packageCount = null;
+    const findings = validateDeclaration(draft);
+    expect(findings.some((finding) => finding.message.includes("Number of packages is required"))).toBe(true);
+  });
+
+  it("blocks a printed delivery term that has not been mapped", () => {
+    const draft = createReadyDraft();
+    draft.shipment.deliveryTermCode = null;
+    const findings = validateDeclaration(draft);
+    expect(findings.some((finding) => finding.message.includes("must be mapped and confirmed"))).toBe(true);
+  });
+
+  it("passes blocking checks for a completed controlled test declaration", () => {
+    const findings = validateDeclaration(createReadyDraft());
+    expect(hasBlockingErrors(findings)).toBe(false);
+    expect(findings.some((finding) => finding.message.includes("Shipment gross weight"))).toBe(true);
   });
 });
 
-describe("PriceSmart demo data", () => {
-  it("has 6 items", () => {
+describe("PriceSmart fixture", () => {
+  it("contains six separate items and reconciles to USD 80,779.46", () => {
     expect(PRICEMART_DEMO_EXTRACTION.items).toHaveLength(6);
-  });
-
-  it("total is 80779.46", () => {
     expect(PRICEMART_DEMO_EXTRACTION.invoice.totalValue).toBe(80779.46);
   });
 
-  it("has 19 pallets and 6 cases", () => {
-    const pallets = PRICEMART_DEMO_EXTRACTION.packages.find((p) => p.packageType === "PL");
-    const cases = PRICEMART_DEMO_EXTRACTION.packages.find((p) => p.packageType === "CS");
-    expect(pallets?.quantity).toBe(19);
-    expect(cases?.quantity).toBe(6);
-  });
-
-  it("items 4 and 5 are both Register Stands with same HS code", () => {
+  it("keeps same-code register stands as separate rows", () => {
     const item4 = PRICEMART_DEMO_EXTRACTION.items[3];
     const item5 = PRICEMART_DEMO_EXTRACTION.items[4];
-    expect(item4.commercialDescription).toContain("Register Stand");
-    expect(item5.commercialDescription).toContain("Register Stand");
     expect(item4.rawHsCode).toBe(item5.rawHsCode);
-    // Different package types
     expect(item4.packageType).not.toBe(item5.packageType);
+    expect(item4.articleNumber).not.toBe(item5.articleNumber);
   });
 
-  it("has warnings about missing fields", () => {
-    const warnings = PRICEMART_DEMO_EXTRACTION.warnings;
-    expect(warnings.some((w) => w.includes("Consignee"))).toBe(true);
-    expect(warnings.some((w) => w.includes("Manifest"))).toBe(true);
-    expect(warnings.some((w) => w.includes("weight"))).toBe(true);
-  });
-
-  it("is marked as DEMO DATA", () => {
-    // Demo data should always have the demo warning
-    // When loaded through the wizard, the first warning is the demo label
-    const demoData = PRICEMART_DEMO_EXTRACTION;
-    expect(demoData.seller.name).toContain("PriceSmart");
+  it("contains explicit package counts rather than inferred values", () => {
+    expect(PRICEMART_DEMO_EXTRACTION.items.map((item) => item.packageCount)).toEqual([1, 10, 1, 6, 6, 1]);
   });
 });
 
-describe("AI provider routing", () => {
-  it("AI_ERROR_CODES includes CONFIGURATION_ERROR", async () => {
-    const mod = await import("@/lib/ai/types");
-    expect(mod.AI_ERROR_CODES.CONFIGURATION_ERROR).toBe("AI_CONFIGURATION_ERROR");
+describe("ASYCUDA XML generation", () => {
+  it("generates well-formed XML with the declaration first", () => {
+    const xml = buildAsycudaXml(createReadyDraft());
+    expect(xml.startsWith("<?xml")).toBe(true);
+    expect(() => new XMLParser({ ignoreAttributes: false }).parse(xml)).not.toThrow();
   });
 
-  it("AI_ERROR_CODES includes PROVIDER_UNAVAILABLE", async () => {
-    const mod = await import("@/lib/ai/types");
-    expect(mod.AI_ERROR_CODES.PROVIDER_UNAVAILABLE).toBe("AI_PROVIDER_UNAVAILABLE");
+  it("keeps major ASYCUDA sections as root-level siblings in order", () => {
+    const xml = buildAsycudaXml(createReadyDraft());
+    const order = ["<Property>", "<Identification>", "<Traders>", "<Declarant>", "<General_information>", "<Transport>", "<Financial>", "<Valuation>", "<Item>"];
+    const positions = order.map((tag) => xml.indexOf(tag));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
-  it("InvoiceJsonSchema rejects invalid JSON", async () => {
+  it("maps exporter, importer, declarant, commercial reference and Box 40 source", () => {
+    const draft = createReadyDraft();
+    const xml = buildAsycudaXml(draft);
+    expect(xml).toContain("<Exporter_name>PriceSmart, Inc.</Exporter_name>");
+    expect(xml).toContain("<Consignee_name>PriceSmart Jamaica Ltd</Consignee_name>");
+    expect(xml).toContain("<Declarant_name>Kingston Customs Brokers &amp; Sons</Declarant_name>");
+    expect(xml).toContain(`<Number>${draft.commercialReference.number}</Number>`);
+    expect(xml).toContain("<Previous_document_reference>SEAB2407123</Previous_document_reference>");
+  });
+
+  it("escapes normal commercial characters", () => {
+    const xml = buildAsycudaXml(createReadyDraft());
+    expect(xml).toContain("Kingston Customs Brokers &amp; Sons");
+    expect(xml).toContain("Kingston &lt;Clearance&gt; Office");
+    expect(xml).toContain("PRICESMART &amp; JAMAICA");
+  });
+
+  it("creates one Item element per included row and preserves edits", () => {
+    const draft = createReadyDraft();
+    draft.items[0].commercialDescription = "Edited Safe & Security Cabinet";
+    draft.items[5].includeInXml = false;
+    const xml = buildAsycudaXml(draft);
+    expect((xml.match(/<Item>/g) ?? [])).toHaveLength(5);
+    expect(xml).toContain("Edited Safe &amp; Security Cabinet");
+    expect(xml).not.toContain("Scanner Center Module");
+  });
+
+  it("does not copy sample registration, assessment, receipt, tax or root IDs", () => {
+    const xml = buildAsycudaXml(createReadyDraft());
+    expect(xml).not.toMatch(/<ASYCUDA\s+id=/);
+    expect(xml).not.toMatch(/<Registration>\s*<Serial_number>[^<]+/);
+    expect(xml).not.toMatch(/<Assessment>\s*<Serial_number>[^<]+/);
+    expect(xml).not.toMatch(/<receipt>\s*<Serial_number>[^<]+/);
+    expect(xml).not.toContain("5893622");
+  });
+});
+
+describe("AI provider configuration", () => {
+  it("uses Gemini first and OpenRouter as fallback", async () => {
+    const { getProviderConfig } = await import("@/lib/ai/extract-invoice");
+    const order = getProviderConfig().order.split(",").map((provider) => provider.trim());
+    expect(order[0]).toBe("gemini");
+    expect(order).toContain("openrouter");
+  });
+
+  it("rejects incomplete provider JSON", async () => {
     const { InvoiceJsonSchema } = await import("@/lib/ai/types");
     expect(() => InvoiceJsonSchema.parse({})).toThrow();
   });
 
-  it("InvoiceJsonSchema accepts valid minimal data", async () => {
-    const { InvoiceJsonSchema } = await import("@/lib/ai/types");
-    const result = InvoiceJsonSchema.parse({
-      documentType: "commercial_invoice",
-      seller: { name: null, address: null, countryCode: null },
-      consignee: { name: null, address: null, countryCode: null, trn: null },
-      shipment: { containerNumber: null, bookingNumber: null, carrier: null, vessel: null, sealNumber: null, sailDate: null, etaDate: null, billOfLading: null, manifestReference: null, incotermRaw: null, grossWeightKg: null },
-      invoice: { invoiceNumber: null, invoiceDate: null, currency: null, merchandiseValue: null, insuranceValue: null, freightValue: null, totalValue: null },
-      items: [{ lineNumber: 1, commercialDescription: "Test" }],
-    });
-    expect(result.items).toHaveLength(1);
-  });
-
-  it("InvoiceExtractionResultSchema validates properly", async () => {
-    const { InvoiceExtractionResultSchema } = await import("@/lib/asycuda/invoice-extraction-schema");
-    expect(() => InvoiceExtractionResultSchema.parse({ items: [] })).toThrow();
-    const result = InvoiceExtractionResultSchema.parse({
-      seller: { name: null, address: null, countryCode: null },
-      consignee: { name: null, address: null, countryCode: null, trn: null },
-      shipment: { containerNumber: null, bookingNumber: null, carrier: null, vessel: null, sealNumber: null, sailDate: null, etaDate: null, billOfLading: null, manifestReference: null, incotermRaw: null, grossWeightKg: null },
-      invoice: { invoiceNumber: null, invoiceDate: null, currency: null, merchandiseValue: null, insuranceValue: null, freightValue: null, totalValue: null },
-      packages: [],
-      items: [{ lineNumber: 1, articleNumber: null, commercialDescription: "Test", rawHsCode: null, suggestedHsCode: null, hsCodeConfidence: null, quantity: null, unitOfMeasure: null, packageType: null, countryOfOrigin: null, grossWeightKg: null, netWeightKg: null, unitPrice: null, lineTotal: null, extractionConfidence: 0.9, warnings: [] }],
-      warnings: [],
-    });
-    expect(result.items).toHaveLength(1);
-  });
-
-  it("has Gemini configured as first provider", async () => {
-    const { getProviderConfig } = await import("@/lib/ai/extract-invoice");
-    const config = getProviderConfig();
-    expect(config.order).toContain("gemini");
-    expect(config.order.split(",")[0].trim()).toBe("gemini");
-  });
-
-  it("parseProviderOrder returns gemini first", async () => {
-    const { getProviderConfig } = await import("@/lib/ai/extract-invoice");
-    const config = getProviderConfig();
-    const order = config.order.split(",").map((s: string) => s.trim());
-    expect(order[0]).toBe("gemini");
-  });
-
-  it("no Kimi or Moonshot references in extraction provider", () => {
-    const fs = require("fs");
-    const providerContent = fs.readFileSync(
-      require("path").resolve(__dirname, "../src/lib/asycuda/extraction-provider.ts"),
-      "utf-8"
-    );
-    expect(providerContent).not.toMatch(/kimi/i);
-    expect(providerContent).not.toMatch(/moonshot/i);
-  });
-
-  it("no Kimi or Moonshot references in API extract route", () => {
-    const fs = require("fs");
-    const routeContent = fs.readFileSync(
-      require("path").resolve(__dirname, "../src/app/invoice-to-xml/api/extract/route.ts"),
-      "utf-8"
-    );
-    expect(routeContent).not.toMatch(/kimi/i);
-    expect(routeContent).not.toMatch(/moonshot/i);
-  });
-
-  it("PriceSmart demo data has warning about being demo", () => {
-    const demo = PRICEMART_DEMO_EXTRACTION;
-    // Demo data itself doesn't include the DEMO DATA warning (it's added by the UI)
-    // But the demo data should not claim it was extracted
-    expect(demo.warnings.some((w) => w.includes("Consignee information"))).toBe(true);
-    // Ensure no claim of being extracted
-    expect(demo.warnings.join(" ")).not.toMatch(/extracted from uploaded file/i);
+  it("contains no Kimi or Moonshot references in the extraction implementation", () => {
+    const paths = [
+      "../src/lib/ai/extract-invoice.ts",
+      "../src/lib/ai/providers/gemini.ts",
+      "../src/lib/ai/providers/openrouter.ts",
+      "../src/app/invoice-to-xml/api/extract/route.ts",
+    ];
+    for (const path of paths) {
+      const content = readFileSync(resolve(__dirname, path), "utf-8");
+      expect(content).not.toMatch(/kimi|moonshot/i);
+    }
   });
 });
