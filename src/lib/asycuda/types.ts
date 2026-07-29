@@ -90,6 +90,30 @@ export interface HsCodeValidation {
   issues: string[];
 }
 
+export interface JamaicaTariffRates {
+  importDuty: string | null;
+  additionalStampDuty: string | null;
+  gct: string | null;
+  excise: string | null;
+  scta: string | null;
+  scts: string | null;
+  sctf: string | null;
+  standardComplianceFee: string | null;
+  environmentalLevy: string | null;
+  developmentCess: string | null;
+  raw: string[];
+}
+
+export interface JamaicaTariffEntry {
+  code: string;
+  description: string;
+  units: string[];
+  rates: JamaicaTariffRates;
+  effectiveDate: string;
+  sourceUrl: string;
+  source: "jca-pdf-2026" | "jamaica-trade-portal-api";
+}
+
 export interface EditableLineItem extends ExtractionItem {
   /** Confirmed ASYCUDA commodity-code portion, normally eight digits. */
   normalizedCommodityCode: string;
@@ -102,7 +126,16 @@ export interface EditableLineItem extends ExtractionItem {
   confirmedHsCode: string | null;
   hsConfirmed: boolean;
   includeInXml: boolean;
-  hsSource: "invoice" | "ai-suggestion" | "manual" | "saved-mapping";
+  hsSource: "invoice" | "ai-suggestion" | "manual" | "saved-mapping" | "jca-tariff";
+  /** Official 10-digit Jamaican tariff selected by the declarant. */
+  officialJamaicaTariffCode: string | null;
+  officialTariffDescription: string | null;
+  officialTariffUnits: string[];
+  officialTariffRates: JamaicaTariffRates | null;
+  officialTariffEffectiveDate: string | null;
+  officialTariffSourceUrl: string | null;
+  officialTariffSource: JamaicaTariffEntry["source"] | null;
+  tariffVerified: boolean;
 }
 
 export type ValidationSeverity = "error" | "warning" | "info";
