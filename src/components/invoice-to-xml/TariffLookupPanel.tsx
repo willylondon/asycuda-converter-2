@@ -6,8 +6,9 @@ import type { JamaicaTariffEntry } from "@/lib/asycuda/types";
 
 interface SearchResponse {
   results: JamaicaTariffEntry[];
-  catalogue: "jca-2026-seed" | "jamaica-trade-portal-api";
+  catalogue: "jca-2026-seed" | "jamaica-trade-portal-public" | "jamaica-trade-portal-api";
   fullCatalogueConfigured: boolean;
+  exactCodeLookupAvailable: boolean;
   sourceUrl: string;
   effectiveDate: string;
   message?: string;
@@ -26,6 +27,12 @@ function displayRate(value: string | null): string {
   if (!Number.isFinite(numeric)) return value;
   if (numeric >= 0 && numeric <= 1) return `${(numeric * 100).toLocaleString("en-US", { maximumFractionDigits: 3 })}%`;
   return value;
+}
+
+function sourceLabel(catalogue: SearchResponse["catalogue"]): string {
+  if (catalogue === "jamaica-trade-portal-api") return "Jamaica Trade Portal API";
+  if (catalogue === "jamaica-trade-portal-public") return "Live public Jamaica Trade Portal";
+  return "JCA 2026 client-demo catalogue";
 }
 
 export function TariffLookupPanel({ lineNumber, initialQuery, onApply, onClose }: Props) {
@@ -65,7 +72,7 @@ export function TariffLookupPanel({ lineNumber, initialQuery, onApply, onClose }
             <h3 className="font-semibold">Official Jamaica Tariff Lookup — Line {lineNumber}</h3>
           </div>
           <p className="mt-1 text-sm text-text-muted">
-            Verify the complete 10-digit tariff code against the 2026 Jamaican tariff before confirming the HS code.
+            Verify the complete 10-digit tariff code against the current Jamaican tariff before confirming the HS code.
           </p>
         </div>
         <button type="button" onClick={onClose} className="rounded-lg p-2 text-text-muted hover:bg-background hover:text-text" aria-label="Close tariff lookup">
@@ -83,7 +90,7 @@ export function TariffLookupPanel({ lineNumber, initialQuery, onApply, onClose }
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search a 10-digit code or product description"
+          placeholder="Enter an exact 10-digit code or search the demo descriptions"
           className="min-h-[46px] flex-1 rounded-xl border border-border bg-background px-4 text-sm text-text focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         />
         <button type="submit" disabled={loading || !query.trim()} className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-accent px-5 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
@@ -97,9 +104,7 @@ export function TariffLookupPanel({ lineNumber, initialQuery, onApply, onClose }
       {data && (
         <div className="mt-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
-            <span>
-              Source: {data.catalogue === "jamaica-trade-portal-api" ? "Jamaica Trade Portal API" : "JCA 2026 client-demo catalogue"} · Effective {data.effectiveDate}
-            </span>
+            <span>Source: {sourceLabel(data.catalogue)} · Tariff reference effective {data.effectiveDate}</span>
             <a href={data.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-accent hover:underline">
               Open official source <ExternalLink className="h-3.5 w-3.5" />
             </a>
@@ -107,7 +112,7 @@ export function TariffLookupPanel({ lineNumber, initialQuery, onApply, onClose }
 
           {!data.fullCatalogueConfigured && (
             <div className="mb-3 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-text">
-              The PriceSmart client-demo codes are available now. Full-catalogue lookup activates when the Jamaica Trade Portal API token and secret are added to Vercel.
+              Exact 10-digit codes are verified live against the public Jamaica Trade Portal. Broad keyword and partial-code searches outside the PriceSmart demo require official Trade Portal API credentials.
             </div>
           )}
 
@@ -141,14 +146,14 @@ export function TariffLookupPanel({ lineNumber, initialQuery, onApply, onClose }
 
           {!loading && data.results.length === 0 && (
             <div className="rounded-xl border border-border bg-background p-5 text-center text-sm text-text-muted">
-              No matching tariff was found. Search using the full printed code, the first eight digits, or a clearer product description.
+              No matching tariff was found. Enter the complete 10-digit code for live verification or revise the product description.
             </div>
           )}
         </div>
       )}
 
       <p className="mt-4 text-xs leading-5 text-text-muted">
-        Tariff lookup supports classification review. It does not calculate the final customs liability or replace confirmation by a licensed customs broker.
+        Tariff lookup supports classification review. It does not calculate final customs liability or replace confirmation by a licensed customs broker.
       </p>
     </section>
   );
