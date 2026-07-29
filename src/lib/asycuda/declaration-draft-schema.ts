@@ -46,14 +46,14 @@ export const EditableLineItemSchema = z.object({
   hsConfirmed: z.boolean(),
   includeInXml: z.boolean(),
   hsSource: z.enum(["invoice", "ai-suggestion", "manual", "saved-mapping", "jca-tariff"]),
-  officialJamaicaTariffCode: nullableString,
-  officialTariffDescription: nullableString,
-  officialTariffUnits: z.array(z.string()),
-  officialTariffRates: JamaicaTariffRatesSchema.nullable(),
-  officialTariffEffectiveDate: nullableString,
-  officialTariffSourceUrl: nullableString,
-  officialTariffSource: z.enum(["jca-pdf-2026", "jamaica-trade-portal-api"]).nullable(),
-  tariffVerified: z.boolean(),
+  officialJamaicaTariffCode: nullableString.optional(),
+  officialTariffDescription: nullableString.optional(),
+  officialTariffUnits: z.array(z.string()).optional(),
+  officialTariffRates: JamaicaTariffRatesSchema.nullable().optional(),
+  officialTariffEffectiveDate: nullableString.optional(),
+  officialTariffSourceUrl: nullableString.optional(),
+  officialTariffSource: z.enum(["jca-pdf-2026", "jamaica-trade-portal-api"]).nullable().optional(),
+  tariffVerified: z.boolean().optional(),
 });
 
 export const DeclarationDraftSchema = z.object({
