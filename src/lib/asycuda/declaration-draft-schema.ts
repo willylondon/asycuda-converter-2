@@ -3,6 +3,20 @@ import { z } from "zod";
 const nullableString = z.string().nullable();
 const nullableNumber = z.number().finite().nullable();
 
+const JamaicaTariffRatesSchema = z.object({
+  importDuty: nullableString,
+  additionalStampDuty: nullableString,
+  gct: nullableString,
+  excise: nullableString,
+  scta: nullableString,
+  scts: nullableString,
+  sctf: nullableString,
+  standardComplianceFee: nullableString,
+  environmentalLevy: nullableString,
+  developmentCess: nullableString,
+  raw: z.array(z.string()),
+});
+
 export const EditableLineItemSchema = z.object({
   lineNumber: z.number().int().positive(),
   articleNumber: nullableString,
@@ -31,7 +45,15 @@ export const EditableLineItemSchema = z.object({
   confirmedHsCode: nullableString,
   hsConfirmed: z.boolean(),
   includeInXml: z.boolean(),
-  hsSource: z.enum(["invoice", "ai-suggestion", "manual", "saved-mapping"]),
+  hsSource: z.enum(["invoice", "ai-suggestion", "manual", "saved-mapping", "jca-tariff"]),
+  officialJamaicaTariffCode: nullableString,
+  officialTariffDescription: nullableString,
+  officialTariffUnits: z.array(z.string()),
+  officialTariffRates: JamaicaTariffRatesSchema.nullable(),
+  officialTariffEffectiveDate: nullableString,
+  officialTariffSourceUrl: nullableString,
+  officialTariffSource: z.enum(["jca-pdf-2026", "jamaica-trade-portal-api"]).nullable(),
+  tariffVerified: z.boolean(),
 });
 
 export const DeclarationDraftSchema = z.object({
