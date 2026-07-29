@@ -12,6 +12,20 @@ import { formatMinorUnits, sumMinorUnits, toMinorUnits } from "@/lib/asycuda/dec
 import { PRICEMART_DEMO_EXTRACTION } from "@/lib/asycuda/demo-data";
 import { normalizeHsCode, stripHsCodeFormatting, validateHsCode } from "@/lib/asycuda/hs-code";
 import { hasBlockingErrors, validateDeclaration } from "@/lib/asycuda/validation";
+import {
+  searchJamaicaTariff,
+  splitJamaicaTariffCode,
+} from "@/lib/tariff/jamaica-tariff";
+
+const OFFICIAL_CODES: Record<string, { code: string; description: string }> = {
+  "83030000": {
+    code: "8303000000",
+    description: "Armoured or reinforced safes, strong-boxes and doors and safe deposit lockers for strong-rooms, cash or deed boxes and the like, of base metal.",
+  },
+  "84254900": { code: "8425490000", description: "Other jacks and hoists" },
+  "84388000": { code: "8438800000", description: "Other machinery for the industrial preparation or manufacture of food or drink" },
+  "94036090": { code: "9403609000", description: "Other wooden furniture" },
+};
 
 function createReadyDraft(): DeclarationDraft {
   const base = createBlankDeclarationDraft();
@@ -73,11 +87,31 @@ function createReadyDraft(): DeclarationDraft {
 
   const draft = createExtractionDraft(PRICEMART_DEMO_EXTRACTION, base, "demo");
   draft.invoice.exchangeRate = "156.50";
-  draft.items = draft.items.map((item) => ({
-    ...item,
-    hsConfirmed: true,
-    confirmedHsCode: `${item.normalizedCommodityCode}${item.precision1 ?? ""}${item.precision2 ?? ""}${item.precision3 ?? ""}${item.precision4 ?? ""}`,
-  }));
+  draft.items = draft.items.map((item) => {
+    const official = OFFICIAL_CODES[item.normalizedCommodityCode];
+    if (!official) throw new Error(`Missing official test tariff for ${item.normalizedCommodityCode}`);
+    const split = splitJamaicaTariffCode(official.code);
+    return {
+      ...item,
+      normalizedCommodityCode: split.commodityCode,
+      precision1: split.precision1,
+      precision2: split.precision2,
+      precision3: split.precision3,
+      precision4: split.precision4,
+      precision: [split.precision1, split.precision2].filter(Boolean).join(""),
+      hsConfirmed: true,
+      confirmedHsCode: official.code,
+      hsSource: "jca-tariff" as const,
+      officialJamaicaTariffCode: official.code,
+      officialTariffDescription: official.description,
+      officialTariffUnits: ["kg", "u"],
+      officialTariffRates: null,
+      officialTariffEffectiveDate: "2026-02-27",
+      officialTariffSourceUrl: "https://jca.gov.jm/",
+      officialTariffSource: "jca-pdf-2026" as const,
+      tariffVerified: true,
+    };
+  });
   return draft;
 }
 
@@ -103,6 +137,30 @@ describe("HS-code handling", () => {
 
   it("rejects non-numeric content", () => {
     expect(validateHsCode("ABC123").valid).toBe(false);
+  });
+});
+
+describe("Jamaica tariff lookup", () => {
+  it("splits the official 10-digit tariff into ASYCUDA commodity and precision fields", () => {
+    expect(splitJamaicaTariffCode("9403609000")).toEqual({
+      commodityCode: "94036090",
+      precision1: "0",
+      precision2: "0",
+      precision3: null,
+      precision4: null,
+    });
+  });
+
+  it("finds the official PriceSmart safe tariff in the JCA client-demo catalogue", async () => {
+    const response = await searchJamaicaTariff("8303.00.00.0");
+    expect(response.results[0]?.code).toBe("8303000000");
+    expect(response.results[0]?.description).toContain("safes");
+    expect(response.results[0]?.effectiveDate).toBe("2026-02-27");
+  });
+
+  it("supports description search", async () => {
+    const response = await searchJamaicaTariff("pallet jacks hoists");
+    expect(response.results.some((entry) => entry.code === "8425490000")).toBe(true);
   });
 });
 
@@ -134,6 +192,21 @@ describe("declaration validation", () => {
     draft.items[0].confirmedHsCode = null;
     const findings = validateDeclaration(draft);
     expect(findings.some((finding) => finding.message.includes("reviewed and confirmed"))).toBe(true);
+  });
+
+  it("blocks an item that has not been verified against the Jamaican tariff", () => {
+    const draft = createReadyDraft();
+    draft.items[0].tariffVerified = false;
+    draft.items[0].officialJamaicaTariffCode = null;
+    const findings = validateDeclaration(draft);
+    expect(findings.some((finding) => finding.message.includes("official 10-digit Jamaican tariff"))).toBe(true);
+  });
+
+  it("blocks a mismatch between official tariff and ASYCUDA fields", () => {
+    const draft = createReadyDraft();
+    draft.items[0].precision2 = "9";
+    const findings = validateDeclaration(draft);
+    expect(findings.some((finding) => finding.message.includes("do not match official tariff"))).toBe(true);
   });
 
   it("blocks missing package quantity instead of copying product quantity", () => {
@@ -212,6 +285,13 @@ describe("ASYCUDA XML generation", () => {
     expect(xml).toContain("<Declarant_name>Kingston Customs Brokers &amp; Sons</Declarant_name>");
     expect(xml).toContain(`<Number>${draft.commercialReference.number}</Number>`);
     expect(xml).toContain("<Previous_document_reference>SEAB2407123</Previous_document_reference>");
+  });
+
+  it("maps the complete official tariff into commodity and precision nodes", () => {
+    const xml = buildAsycudaXml(createReadyDraft());
+    expect(xml).toContain("<Commodity_code>83030000</Commodity_code>");
+    expect(xml).toContain("<Precision_1>0</Precision_1>");
+    expect(xml).toContain("<Precision_2>0</Precision_2>");
   });
 
   it("escapes normal commercial characters", () => {
