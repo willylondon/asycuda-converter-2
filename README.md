@@ -26,16 +26,19 @@ The progressive workflow is:
 
 The tariff reference is the Jamaica Customs Agency **Integrated Tariff Based on HS 2022**, effective February 27, 2026.
 
-The application currently provides:
+The application provides:
 
-- Official 10-digit tariff selection for the PriceSmart client-demo codes.
-- Search by printed tariff code or commercial description.
-- Official tariff description, statistical units and selected rate columns.
+- Live server-side verification of any exact 10-digit code through the public Jamaica Trade Information Portal.
+- A small checked-in JCA 2026 catalogue for immediate PriceSmart client demonstrations.
+- Optional official API support for broad keyword and partial-code searches across the complete catalogue.
+- Official tariff descriptions, statistical units and selected duty/tax columns.
 - Automatic mapping of the first eight digits to `Commodity_code` and the final two digits to ASYCUDA precision fields.
 - Blocking validation when the selected official tariff and the XML commodity/precision fields disagree.
-- Server-side support for the Jamaica Trade Portal commodity API when credentials are configured.
+- Links back to the exact official tariff source used for verification.
 
-The checked-in catalogue is deliberately limited to the PriceSmart demonstration and a small validation fixture. It is not a substitute for the complete tariff publication. Full-catalogue lookup requires official Jamaica Trade Portal API credentials.
+Exact 10-digit verification does not require private credentials. The application fetches the corresponding public Trade Portal commodity page on the server and extracts its description, rates and units.
+
+The checked-in catalogue remains deliberately limited to the PriceSmart demonstration and test fixtures. Broad description or partial-code search outside those fixtures requires official Jamaica Trade Portal API credentials.
 
 Tariff rates are displayed for broker review only. The application does not calculate final customs liability because liability may depend on valuation, origin, procedure, exemptions, concessions, end-use conditions and other declaration facts.
 
@@ -73,16 +76,16 @@ OPENROUTER_MODEL=google/gemini-2.5-flash
 AI_PROVIDER_ORDER=gemini,openrouter
 ```
 
-### Complete Jamaican tariff catalogue
+### Optional broad Jamaican tariff search
 
 ```env
 JAMAICA_TARIFF_API_TOKEN=
 JAMAICA_TARIFF_API_SECRET=
 ```
 
-These tariff credentials must remain server-side. Never prefix them with `NEXT_PUBLIC_` and never return them through an API response or browser bundle.
+These credentials are optional for exact 10-digit verification. They enable broad keyword and partial-code searches through the official API.
 
-Without these credentials, the official PriceSmart client-demo tariff entries remain available but arbitrary full-catalogue searches may return no result.
+The credentials must remain server-side. Never prefix them with `NEXT_PUBLIC_` and never return them through an API response or browser bundle.
 
 ## Core safeguards
 
@@ -92,6 +95,8 @@ Without these credentials, the official PriceSmart client-demo tariff entries re
 - Product quantity, statistical quantity and package count remain separate.
 - Same-HS invoice rows are not merged.
 - Printed tariff digits are preserved for audit.
+- Each included item requires a verified official 10-digit Jamaican tariff.
+- Editing an HS commodity or precision field clears tariff verification.
 - XML is generated with `xmlbuilder2` so text is escaped and the document remains well formed.
 - Registration, assessment, receipt and calculated tax-result values are not copied from the reference declaration.
 - Monetary reconciliation uses integer minor-unit arithmetic.
@@ -124,7 +129,9 @@ Current automated coverage includes:
 
 - Gemini-first and OpenRouter-fallback configuration.
 - HS-code preservation and precision mapping.
-- Official Jamaican tariff search and 10-digit mapping.
+- Official Jamaican tariff seed search.
+- Public Trade Portal commodity-page parsing.
+- Official 10-digit tariff-to-ASYCUDA mapping.
 - Tariff-verification blocking rules.
 - Decimal-safe invoice reconciliation.
 - Party, manifest, commercial-reference and Box 40 mappings.
