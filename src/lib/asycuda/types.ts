@@ -128,14 +128,14 @@ export interface EditableLineItem extends ExtractionItem {
   includeInXml: boolean;
   hsSource: "invoice" | "ai-suggestion" | "manual" | "saved-mapping" | "jca-tariff";
   /** Official 10-digit Jamaican tariff selected by the declarant. */
-  officialJamaicaTariffCode: string | null;
-  officialTariffDescription: string | null;
-  officialTariffUnits: string[];
-  officialTariffRates: JamaicaTariffRates | null;
-  officialTariffEffectiveDate: string | null;
-  officialTariffSourceUrl: string | null;
-  officialTariffSource: JamaicaTariffEntry["source"] | null;
-  tariffVerified: boolean;
+  officialJamaicaTariffCode?: string | null;
+  officialTariffDescription?: string | null;
+  officialTariffUnits?: string[];
+  officialTariffRates?: JamaicaTariffRates | null;
+  officialTariffEffectiveDate?: string | null;
+  officialTariffSourceUrl?: string | null;
+  officialTariffSource?: JamaicaTariffEntry["source"] | null;
+  tariffVerified?: boolean;
 }
 
 export type ValidationSeverity = "error" | "warning" | "info";
