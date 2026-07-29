@@ -1,0 +1,115 @@
+{
+  "metadata": {
+    "title": "Integrated Tariff Based on HS 2022",
+    "effectiveDate": "2026-02-27",
+    "sourceUrl": "https://jca.gov.jm/wp-content/uploads/2026/03/PRINTABLE-TARIFF-based-on-HS-2022-effective-February-26-2026.x37028.pdf",
+    "note": "Seed entries used for the client demo. Configure the Jamaica Trade Portal API for full-catalogue lookup."
+  },
+  "entries": [
+    {
+      "code": "0101210000",
+      "description": "Pure-bred breeding animals",
+      "units": ["kg", "u"],
+      "rates": {
+        "importDuty": "0",
+        "additionalStampDuty": "-",
+        "gct": "0.15",
+        "excise": "-",
+        "scta": "-",
+        "scts": "-",
+        "sctf": "-",
+        "standardComplianceFee": "-",
+        "environmentalLevy": "0.005",
+        "developmentCess": "-",
+        "raw": ["0", "-", "0.15", "-", "-", "-", "-", "-", "0.005", "-"]
+      },
+      "effectiveDate": "2026-02-27",
+      "sourceUrl": "https://jca.gov.jm/wp-content/uploads/2026/03/PRINTABLE-TARIFF-based-on-HS-2022-effective-February-26-2026.x37028.pdf",
+      "source": "jca-pdf-2026"
+    },
+    {
+      "code": "8303000000",
+      "description": "Armoured or reinforced safes, strong-boxes and doors and safe deposit lockers for strong-rooms, cash or deed boxes and the like, of base metal.",
+      "units": ["kg"],
+      "rates": {
+        "importDuty": "0",
+        "additionalStampDuty": "-",
+        "gct": "0.15",
+        "excise": "-",
+        "scta": "-",
+        "scts": "-",
+        "sctf": "-",
+        "standardComplianceFee": "0.003",
+        "environmentalLevy": "0.005",
+        "developmentCess": "-",
+        "raw": ["0", "-", "0.15", "-", "-", "-", "-", "0.003", "0.005", "-"]
+      },
+      "effectiveDate": "2026-02-27",
+      "sourceUrl": "https://jca.gov.jm/wp-content/uploads/2026/03/PRINTABLE-TARIFF-based-on-HS-2022-effective-February-26-2026.x37028.pdf",
+      "source": "jca-pdf-2026"
+    },
+    {
+      "code": "8425490000",
+      "description": "Other jacks and hoists",
+      "units": ["kg", "u"],
+      "rates": {
+        "importDuty": "0.05",
+        "additionalStampDuty": "-",
+        "gct": "0.15",
+        "excise": "-",
+        "scta": "-",
+        "scts": "-",
+        "sctf": "-",
+        "standardComplianceFee": "-",
+        "environmentalLevy": "0.005",
+        "developmentCess": "-",
+        "raw": ["0.05", "-", "0.15", "-", "-", "-", "-", "-", "0.005", "-"]
+      },
+      "effectiveDate": "2026-02-27",
+      "sourceUrl": "https://jca.gov.jm/wp-content/uploads/2026/03/PRINTABLE-TARIFF-based-on-HS-2022-effective-February-26-2026.x37028.pdf",
+      "source": "jca-pdf-2026"
+    },
+    {
+      "code": "8438800000",
+      "description": "Other machinery for the industrial preparation or manufacture of food or drink",
+      "units": ["kg", "u"],
+      "rates": {
+        "importDuty": "0",
+        "additionalStampDuty": "-",
+        "gct": "0.15",
+        "excise": "-",
+        "scta": "-",
+        "scts": "-",
+        "sctf": "-",
+        "standardComplianceFee": "-",
+        "environmentalLevy": "0.005",
+        "developmentCess": "-",
+        "raw": ["0", "-", "0.15", "-", "-", "-", "-", "-", "0.005", "-"]
+      },
+      "effectiveDate": "2026-02-27",
+      "sourceUrl": "https://jca.gov.jm/wp-content/uploads/2026/03/PRINTABLE-TARIFF-based-on-HS-2022-effective-February-26-2026.x37028.pdf",
+      "source": "jca-pdf-2026"
+    },
+    {
+      "code": "9403609000",
+      "description": "Other wooden furniture",
+      "units": ["kg", "u"],
+      "rates": {
+        "importDuty": "0.2",
+        "additionalStampDuty": "-",
+        "gct": "0.15",
+        "excise": "-",
+        "scta": "-",
+        "scts": "-",
+        "sctf": "-",
+        "standardComplianceFee": "0.003",
+        "environmentalLevy": "0.005",
+        "developmentCess": "-",
+        "raw": ["0.2", "-", "0.15", "-", "-", "-", "-", "0.003", "0.005", "-"]
+      },
+      "effectiveDate": "2026-02-27",
+      "sourceUrl": "https://jca.gov.jm/wp-content/uploads/2026/03/PRINTABLE-TARIFF-based-on-HS-2022-effective-February-26-2026.x37028.pdf",
+      "source": "jca-pdf-2026"
+    }
+  ]
+}
