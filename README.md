@@ -1,108 +1,161 @@
-# ASYCUDA Excel Converter 2.0
+# ASYCUDA Converter 2
 
-Convert Excel delivery manifests into ASYCUDA-compliant XML files in minutes. A modern, fast, and secure customs document conversion platform built with Next.js 15+.
+A Next.js application with two customs-document workflows:
 
-## Features
+1. Convert supported Excel manifests into XML.
+2. Extract commercial invoices, review declaration data, verify Jamaican tariff codes and generate test ASYCUDA XML for import verification.
 
-- **Drag-and-drop upload** — Upload .xlsx or .xls files up to 10MB
-- **Instant validation** — Check column structure, data types, and ASYCUDA requirements before conversion
-- **ASYCUDA-compliant XML** — Output follows ASYCUDA World requirements and is validated before generation
-- **No account required** — Convert files immediately, no registration needed
-- **Secure by design** — Files processed in memory, never stored on disk
-- **Accessible** — WCAG 2.2 AA compliant with full keyboard navigation
-- **Responsive** — Works on desktop, tablet, and mobile devices
+> The Invoice-to-ASYCUDA module produces **test ASYCUDA XML**. Import compatibility has not yet been confirmed inside a live Jamaica Customs ASYCUDA declaration. Do not describe the output as certified, customs-approved or guaranteed to import.
 
-## Tech Stack
+## Invoice-to-ASYCUDA MVP
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16+ (App Router) |
-| Language | TypeScript (strict mode) |
-| Styling | Tailwind CSS v4 |
-| Icons | Lucide React |
-| Validation | Zod |
-| Forms | React Hook Form |
-| Excel Parsing | SheetJS (xlsx) |
-| Deployment | Vercel |
-| Font | Inter (Google Fonts) |
+Route: `/invoice-to-xml`
 
-## Quick Start
+The progressive workflow is:
+
+1. Enter declarant, consignee, manifest, BL/AWB, procedure, office and transport details.
+2. Upload a PDF or image, enter data manually, or load the PriceSmart demo.
+3. Extract invoice information using Gemini 2.5 Flash with OpenRouter fallback.
+4. Review exporter, shipment and invoice values.
+5. Review every line item, package count, statistical quantity, origin, weight and value.
+6. Verify each item against an official 10-digit Jamaican tariff.
+7. Run deterministic validation.
+8. Preview and download test ASYCUDA XML.
+
+### Jamaican tariff verification
+
+The tariff reference is the Jamaica Customs Agency **Integrated Tariff Based on HS 2022**, effective February 27, 2026.
+
+The application currently provides:
+
+- Official 10-digit tariff selection for the PriceSmart client-demo codes.
+- Search by printed tariff code or commercial description.
+- Official tariff description, statistical units and selected rate columns.
+- Automatic mapping of the first eight digits to `Commodity_code` and the final two digits to ASYCUDA precision fields.
+- Blocking validation when the selected official tariff and the XML commodity/precision fields disagree.
+- Server-side support for the Jamaica Trade Portal commodity API when credentials are configured.
+
+The checked-in catalogue is deliberately limited to the PriceSmart demonstration and a small validation fixture. It is not a substitute for the complete tariff publication. Full-catalogue lookup requires official Jamaica Trade Portal API credentials.
+
+Tariff rates are displayed for broker review only. The application does not calculate final customs liability because liability may depend on valuation, origin, procedure, exemptions, concessions, end-use conditions and other declaration facts.
+
+## AI providers
+
+Primary provider:
+
+```text
+Gemini 2.5 Flash
+```
+
+Fallback provider:
+
+```text
+OpenRouter — Google Gemini 2.5 Flash
+```
+
+Kimi and Moonshot are not used.
+
+## Environment variables
+
+Copy `.env.example` to `.env.local`.
 
 ```bash
-# Clone the repository
+cp .env.example .env.local
+```
+
+### Invoice extraction
+
+```env
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=google/gemini-2.5-flash
+AI_PROVIDER_ORDER=gemini,openrouter
+```
+
+### Complete Jamaican tariff catalogue
+
+```env
+JAMAICA_TARIFF_API_TOKEN=
+JAMAICA_TARIFF_API_SECRET=
+```
+
+These tariff credentials must remain server-side. Never prefix them with `NEXT_PUBLIC_` and never return them through an API response or browser bundle.
+
+Without these credentials, the official PriceSmart client-demo tariff entries remain available but arbitrary full-catalogue searches may return no result.
+
+## Core safeguards
+
+- One typed `DeclarationDraft` is used through review, validation and XML generation.
+- User edits are preserved before moving to validation.
+- Manual invoice entry works without an AI provider.
+- Product quantity, statistical quantity and package count remain separate.
+- Same-HS invoice rows are not merged.
+- Printed tariff digits are preserved for audit.
+- XML is generated with `xmlbuilder2` so text is escaped and the document remains well formed.
+- Registration, assessment, receipt and calculated tax-result values are not copied from the reference declaration.
+- Monetary reconciliation uses integer minor-unit arithmetic.
+- XML generation is blocked for missing required declaration fields, unresolved tariffs and invalid item data.
+
+## Development
+
+```bash
 git clone https://github.com/willylondon/asycuda-converter-2.git
 cd asycuda-converter-2
-
-# Install dependencies
 npm install
-
-# Copy environment variables
 cp .env.example .env.local
-
-# Start development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open `http://localhost:3000/invoice-to-xml`.
 
-## Project Structure
+## Quality checks
 
-```
-asycuda-converter-2/
-├── src/
-│   ├── app/                  # Next.js App Router pages
-│   │   ├── converter/        # File upload & conversion
-│   │   ├── pricing/          # Pricing plans
-│   │   ├── faq/              # Frequently asked questions
-│   │   ├── support/          # Support & contact form
-│   │   ├── privacy/          # Privacy policy
-│   │   ├── terms/            # Terms of service
-│   │   ├── contact/          # Contact page
-│   │   ├── layout.tsx        # Root layout (metadata, skip-link, header/footer)
-│   │   ├── page.tsx          # Homepage
-│   │   └── globals.css       # Design system & Tailwind
-│   ├── components/
-│   │   ├── layout/           # Header, Footer
-│   │   ├── ui/               # Reusable UI components
-│   │   └── converter/        # Converter-specific components
-│   ├── features/
-│   │   └── converter/        # Conversion engine logic
-│   ├── lib/                  # Utility functions
-│   ├── hooks/                # Custom React hooks
-│   └── types/                # TypeScript type definitions
-├── public/
-│   ├── images/               # Static images & OG images
-│   └── samples/              # Sample Excel & config files
-├── docs/                     # Project documentation
-│   ├── architecture.md       # Architecture overview
-│   ├── deployment.md         # Deployment guide
-│   ├── api.md                # API documentation
-│   ├── conversion-engine.md  # Conversion engine details
-│   ├── security.md           # Security architecture
-│   ├── roadmap.md            # Future development roadmap
-│   └── project-context.md    # Project context for AI coding agents
-└── tests/                    # Test files
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run build
 ```
 
-## Documentation
+The production build runs the unit suite before `next build`.
 
-- [Architecture](docs/architecture.md)
-- [Deployment](docs/deployment.md)
-- [API Reference](docs/api.md)
-- [Conversion Engine](docs/conversion-engine.md)
-- [Security](docs/security.md)
-- [Roadmap](docs/roadmap.md)
-- [Project Context](docs/project-context.md) (for AI coding agents)
+Current automated coverage includes:
 
-## Environment Variables
+- Gemini-first and OpenRouter-fallback configuration.
+- HS-code preservation and precision mapping.
+- Official Jamaican tariff search and 10-digit mapping.
+- Tariff-verification blocking rules.
+- Decimal-safe invoice reconciliation.
+- Party, manifest, commercial-reference and Box 40 mappings.
+- XML element order, escaping and included-item handling.
+- Blank registration, assessment and receipt fields.
 
-See `.env.example` for all required variables.
+## Production acceptance still required
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SITE_URL` | Production URL | Yes |
-| `STRIPE_SECRET_KEY` | Stripe payment processing | For production |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook verification | For production |
+Before describing the module as production-ready:
+
+1. Process a real commercial invoice through the configured AI providers.
+2. Verify all extracted and tariff-classified values with a customs broker.
+3. Import a generated XML file into a live ASYCUDA declaration.
+4. Confirm the required header and item boxes populate correctly.
+5. Record and correct any import error.
+
+Until that acceptance test passes, retain the visible notice:
+
+```text
+TEST ASYCUDA XML — IMPORT COMPATIBILITY NOT YET VERIFIED
+```
+
+## Deployment rule
+
+Deploy this project only through the Vercel account associated with:
+
+```text
+willardwells@gmail.com
+```
+
+Do not deploy it through `itsupport@mac`.
 
 ## License
 
