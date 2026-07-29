@@ -52,7 +52,7 @@ export const EditableLineItemSchema = z.object({
   officialTariffRates: JamaicaTariffRatesSchema.nullable().optional(),
   officialTariffEffectiveDate: nullableString.optional(),
   officialTariffSourceUrl: nullableString.optional(),
-  officialTariffSource: z.enum(["jca-pdf-2026", "jamaica-trade-portal-api"]).nullable().optional(),
+  officialTariffSource: z.enum(["jca-pdf-2026", "jamaica-trade-portal-public", "jamaica-trade-portal-api"]).nullable().optional(),
   tariffVerified: z.boolean().optional(),
 });
 
