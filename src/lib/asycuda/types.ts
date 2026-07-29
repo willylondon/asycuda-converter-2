@@ -111,7 +111,7 @@ export interface JamaicaTariffEntry {
   rates: JamaicaTariffRates;
   effectiveDate: string;
   sourceUrl: string;
-  source: "jca-pdf-2026" | "jamaica-trade-portal-api";
+  source: "jca-pdf-2026" | "jamaica-trade-portal-public" | "jamaica-trade-portal-api";
 }
 
 export interface EditableLineItem extends ExtractionItem {
