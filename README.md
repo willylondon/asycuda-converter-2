@@ -63,6 +63,11 @@ Copy `.env.example` to `.env.local`.
 cp .env.example .env.local
 ```
 
+Google sign-in fails closed unless `ALLOWED_GOOGLE_EMAILS` contains a
+comma-separated list of approved addresses. The allowlist is enforced during
+sign-in and whenever an existing session is read, so removing an address also
+revokes its access.
+
 ### Invoice extraction
 
 ```env
