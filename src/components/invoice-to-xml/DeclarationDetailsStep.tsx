@@ -1,8 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { FileText, PackageCheck, Save, Ship, UserRound } from "lucide-react";
 
 export const declarationDetailsSchema = z.object({
   declarantName: z.string().min(1, "Declarant name is required"),
@@ -134,6 +136,25 @@ const FIELDS: Array<{ name: keyof DeclarationDetails; label: string; required?: 
   { name: "modeOfPayment", label: "Mode of Payment" },
 ];
 
+const DECLARATION_FIELDS: Array<keyof DeclarationDetails> = [
+  "declarantName",
+  "consigneeName",
+  "manifestReference",
+  "regimeType",
+  "customsOfficeCode",
+];
+
+const SHIPMENT_FIELDS: Array<keyof DeclarationDetails> = [
+  "blAwb",
+  "transportMode",
+  "exportCountryName",
+  "borderOfficeCode",
+  "placeOfLoadingName",
+  "deliveryTermCode",
+];
+
+const PRIMARY_FIELDS = new Set([...DECLARATION_FIELDS, ...SHIPMENT_FIELDS]);
+
 interface Props {
   initialData: DeclarationDetails | null;
   onNext: (data: DeclarationDetails) => void;
@@ -144,47 +165,109 @@ export function DeclarationDetailsStep({ initialData, onNext }: Props) {
     register,
     handleSubmit,
     formState: { errors },
+    getValues,
     reset,
   } = useForm<DeclarationDetails>({
     resolver: zodResolver(declarationDetailsSchema),
     defaultValues: initialData ?? {},
   });
+  const [saved, setSaved] = useState(false);
+
+  const renderField = (fieldName: keyof DeclarationDetails) => {
+    const field = FIELDS.find((candidate) => candidate.name === fieldName);
+    if (!field) return null;
+    return (
+      <div key={field.name} className={field.wide ? "sm:col-span-2" : ""}>
+        <label htmlFor={field.name} className="mb-1.5 block text-sm font-semibold text-text">
+          {field.label} {field.required && <span className="text-error">*</span>}
+        </label>
+        <input
+          id={field.name}
+          {...register(field.name)}
+          placeholder={field.placeholder}
+          className="min-h-[46px] w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
+        />
+        {errors[field.name] && <p className="mt-1 text-xs text-error">{errors[field.name]?.message}</p>}
+      </div>
+    );
+  };
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-text">Declaration Details</h2>
-        <p className="mt-2 text-text-muted">Enter the customs information that must not be guessed by AI.</p>
+    <div className="mx-auto max-w-[1180px]">
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="text-3xl font-bold text-text">Start a declaration</h1>
+          <p className="mt-2 text-text-muted">Enter declaration and shipment details before uploading an invoice.</p>
+        </div>
         <button
           type="button"
           onClick={() => reset(DEMO_DATA)}
-          className="mt-3 inline-flex min-h-[44px] items-center rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-accent hover:bg-accent/5"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/5"
         >
-          Load Demo Data
+          <FileText className="h-4 w-4" /> Load demo
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onNext)} className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {FIELDS.map((field) => (
-            <div key={field.name} className={field.wide ? "sm:col-span-2" : ""}>
-              <label htmlFor={field.name} className="mb-1.5 block text-sm font-medium text-text">
-                {field.label} {field.required && <span className="text-error">*</span>}
-              </label>
-              <input
-                id={field.name}
-                {...register(field.name)}
-                placeholder={field.placeholder}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-text placeholder:text-text-muted/50 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-              />
-              {errors[field.name] && <p className="mt-1 text-xs text-error">{errors[field.name]?.message}</p>}
+      <form onSubmit={handleSubmit(onNext)} className="space-y-8">
+        <div className="grid gap-10 lg:grid-cols-[1fr_1fr_290px]">
+          <section aria-labelledby="declaration-heading">
+            <div className="mb-5 flex items-center gap-2 border-b border-border pb-3">
+              <UserRound className="h-5 w-5 text-accent" />
+              <h2 id="declaration-heading" style={{ fontSize: "1.125rem" }} className="font-bold text-text">Declaration details</h2>
             </div>
-          ))}
+            <div className="grid gap-4">{DECLARATION_FIELDS.map(renderField)}</div>
+          </section>
+
+          <section aria-labelledby="shipment-heading">
+            <div className="mb-5 flex items-center gap-2 border-b border-border pb-3">
+              <Ship className="h-5 w-5 text-accent" />
+              <h2 id="shipment-heading" style={{ fontSize: "1.125rem" }} className="font-bold text-text">Shipment details</h2>
+            </div>
+            <div className="grid gap-4">{SHIPMENT_FIELDS.map(renderField)}</div>
+          </section>
+
+          <aside className="rounded-xl border border-accent/20 bg-success/5 p-5">
+            <h2 style={{ fontSize: "1.125rem" }} className="font-bold text-accent-dark">What you&apos;ll need</h2>
+            <div className="mt-5 space-y-5 text-sm">
+              <div className="flex gap-3">
+                <FileText className="mt-0.5 h-5 w-5 flex-none text-accent" />
+                <div><p className="font-semibold text-text">Invoice file</p><p className="mt-1 text-text-muted">A clear PDF or image, up to 10 MB.</p></div>
+              </div>
+              <div className="border-t border-accent/15 pt-5 flex gap-3">
+                <Ship className="mt-0.5 h-5 w-5 flex-none text-accent" />
+                <div><p className="font-semibold text-text">Shipment reference</p><p className="mt-1 text-text-muted">Manifest and bill of lading or AWB.</p></div>
+              </div>
+              <div className="border-t border-accent/15 pt-5 flex gap-3">
+                <PackageCheck className="mt-0.5 h-5 w-5 flex-none text-accent" />
+                <div><p className="font-semibold text-text">Consignee details</p><p className="mt-1 text-text-muted">Name, TRN and address for review.</p></div>
+              </div>
+            </div>
+          </aside>
         </div>
 
-        <div className="flex justify-end border-t border-border pt-4">
-          <button type="submit" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-accent px-8 py-3 font-semibold text-white hover:bg-accent-light">
-            Continue to Upload
+        <details className="rounded-xl border border-border bg-surface">
+          <summary className="cursor-pointer px-5 py-4 text-sm font-semibold text-text hover:bg-surface-hover">
+            Additional customs fields
+            <span className="ml-2 font-normal text-text-muted">Optional now; confirm before export</span>
+          </summary>
+          <div className="grid gap-4 border-t border-border p-5 sm:grid-cols-2 lg:grid-cols-3">
+            {FIELDS.filter((field) => !PRIMARY_FIELDS.has(field.name)).map((field) => renderField(field.name))}
+          </div>
+        </details>
+
+        <div className="sticky bottom-0 -mx-4 flex flex-col-reverse gap-3 border-t border-border bg-white/95 px-4 py-4 backdrop-blur sm:flex-row sm:justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              window.localStorage.setItem("clearance-declaration-draft", JSON.stringify(getValues()));
+              setSaved(true);
+            }}
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg border border-border px-5 py-3 text-sm font-semibold text-text hover:bg-surface-hover"
+          >
+            <Save className="h-4 w-4" /> {saved ? "Draft saved" : "Save draft"}
+          </button>
+          <button type="submit" className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-accent px-8 py-3 font-semibold text-white hover:bg-accent-light">
+            Continue to invoice →
           </button>
         </div>
       </form>

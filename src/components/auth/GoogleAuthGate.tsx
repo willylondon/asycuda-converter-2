@@ -69,7 +69,11 @@ function LoadingCard() {
 
 export function GoogleAuthGate({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
+  const localPreview =
+    process.env.NODE_ENV === "development" &&
+    process.env.NEXT_PUBLIC_LOCAL_AUTH_BYPASS === "1";
 
+  if (localPreview) return children;
   if (status === "loading") return <LoadingCard />;
   if (!session?.user) return <LoginCard />;
 

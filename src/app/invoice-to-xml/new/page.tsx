@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, Download, Eye, FileText, Upload } from "lucide-react";
+import { Check, CheckCircle, Download, Eye, FileText, Upload } from "lucide-react";
 import { GoogleAuthGate } from "@/components/auth/GoogleAuthGate";
 import { DeclarationDetailsStep } from "@/components/invoice-to-xml/DeclarationDetailsStep";
 import { InvoiceUploadStep } from "@/components/invoice-to-xml/InvoiceUploadStep";
@@ -21,16 +21,16 @@ import type { InvoiceExtractionResult } from "@/lib/asycuda/types";
 
 const STEPS = [
   { id: 1, label: "Declaration", icon: FileText },
-  { id: 2, label: "Upload", icon: Upload },
-  { id: 3, label: "Review Shipment", icon: Eye },
-  { id: 4, label: "Review Items", icon: Eye },
-  { id: 5, label: "Validate", icon: CheckCircle },
-  { id: 6, label: "XML", icon: Download },
+  { id: 2, label: "Invoice", icon: Upload },
+  { id: 3, label: "Review", icon: Eye },
+  { id: 4, label: "Validate", icon: CheckCircle },
+  { id: 5, label: "Export", icon: Download },
 ];
 
 export default function NewDeclarationPage() {
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<DeclarationDraft>(() => createBlankDeclarationDraft());
+  const progressStep = step <= 2 ? step : step <= 4 ? 3 : step === 5 ? 4 : 5;
 
   const handleRestart = () => {
     setDraft(createBlankDeclarationDraft());
@@ -39,19 +39,23 @@ export default function NewDeclarationPage() {
 
   return (
     <GoogleAuthGate>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <nav aria-label="Progress" className="mb-10 overflow-x-auto">
-          <ol className="flex min-w-max items-center gap-2 sm:gap-4">
+      <div className="mx-auto max-w-[1320px] px-4 py-7 sm:px-6 lg:px-8">
+        <nav aria-label="Progress" className="mb-10 overflow-x-auto border-b border-border pb-7">
+          <ol className="flex min-w-[720px] items-center">
             {STEPS.map((item, index) => {
-              const active = step === item.id;
-              const done = step > item.id;
+              const active = progressStep === item.id;
+              const done = progressStep > item.id;
               return (
-                <li key={item.id} className="flex items-center gap-2">
-                  <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium ${active ? "bg-accent text-white" : done ? "bg-success/10 text-success" : "bg-surface text-text-muted"}`}>
-                    <item.icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{item.label}</span>
+                <li key={item.id} className="flex flex-1 items-center last:flex-none">
+                  <div className="flex items-center gap-3">
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold ${
+                      active ? "border-accent bg-accent text-white" : done ? "border-success bg-success/10 text-success" : "border-border bg-white text-text-muted"
+                    }`}>
+                      {done ? <Check className="h-4 w-4" /> : item.id}
+                    </span>
+                    <span className={`text-sm font-semibold ${active ? "text-accent" : done ? "text-text" : "text-text-muted"}`}>{item.label}</span>
                   </div>
-                  {index < STEPS.length - 1 && <div className={`h-px w-4 sm:w-8 ${done ? "bg-success/30" : "bg-border"}`} />}
+                  {index < STEPS.length - 1 && <div className={`mx-4 h-px flex-1 ${done ? "bg-success" : "bg-border"}`} />}
                 </li>
               );
             })}

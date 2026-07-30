@@ -5,10 +5,8 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/converter", label: "Converter" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/faq", label: "FAQ" },
+  { href: "/invoice-to-xml", label: "How it works" },
+  { href: "/converter", label: "Manifest converter" },
   { href: "/support", label: "Support" },
 ];
 
@@ -30,10 +28,13 @@ export function Header() {
             href="/"
             className="flex items-center gap-2 font-bold text-lg text-primary hover:text-accent transition-colors"
           >
-            <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center text-sm font-extrabold">
-              AC
+            <span className="w-8 h-8 bg-accent text-white rounded-lg flex items-center justify-center text-sm font-extrabold">
+              C
             </span>
-            <span className="hidden sm:inline">ASYCUDA Excel Converter</span>
+            <span className="hidden sm:flex flex-col leading-tight">
+              <span>Clearance</span>
+              <span className="text-xs font-normal text-text-muted">Invoice to ASYCUDA</span>
+            </span>
           </Link>
 
           {/* Desktop Nav */}
@@ -48,10 +49,10 @@ export function Header() {
               </Link>
             ))}
             <Link
-              href="/converter"
-              className="ml-2 inline-flex items-center justify-center rounded-lg bg-primary text-white px-4 py-2 text-sm font-semibold hover:bg-primary-light transition-colors min-h-[44px]"
+              href="/invoice-to-xml/new"
+              className="ml-2 inline-flex items-center justify-center rounded-lg bg-accent text-white px-4 py-2 text-sm font-semibold hover:bg-accent-light transition-colors min-h-[44px]"
             >
-              Start Converting
+              New declaration
             </Link>
           </div>
 
@@ -84,11 +85,11 @@ export function Header() {
               </Link>
             ))}
             <Link
-              href="/converter"
+              href="/invoice-to-xml/new"
               onClick={() => setMenuOpen(false)}
               className="block mx-3 mt-2 text-center rounded-lg bg-primary text-white px-4 py-3 text-sm font-semibold hover:bg-primary-light transition-colors"
             >
-              Start Converting
+              New declaration
             </Link>
           </div>
         )}

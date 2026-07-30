@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { FileSpreadsheet, Mail } from "lucide-react";
+import { FileCheck2, Mail } from "lucide-react";
 
 const FOOTER_LINKS = {
   Product: [
-    { href: "/converter", label: "Converter" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/faq", label: "FAQ" },
+    { href: "/invoice-to-xml/new", label: "New declaration" },
+    { href: "/invoice-to-xml", label: "How it works" },
+    { href: "/converter", label: "Manifest converter" },
   ],
   Company: [
     { href: "/support", label: "Support" },
@@ -31,12 +31,12 @@ export function Footer() {
               href="/"
               className="flex items-center gap-2 font-bold text-lg text-white hover:text-accent-light transition-colors mb-4"
             >
-              <FileSpreadsheet aria-hidden="true" className="h-6 w-6 text-accent" />
-              <span>ASYCUDA Excel Converter</span>
+              <FileCheck2 aria-hidden="true" className="h-6 w-6 text-accent-light" />
+              <span>Clearance</span>
             </Link>
             <p className="text-sm text-white/72 leading-relaxed">
-              Convert Excel delivery manifests into ASYCUDA-compliant XML files.
-              Fast, secure, customs-ready.
+              Review commercial invoices, verify Jamaican tariff codes and
+              prepare declaration XML for controlled import testing.
             </p>
             <a
               href="mailto:support@asycuda-converter.com"
