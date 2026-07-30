@@ -1,13 +1,20 @@
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { createExtractionProvider, AIExtractionError } from "@/lib/asycuda/extraction-provider";
+import { authOptions } from "@/lib/auth";
 
 /**
- * POST /api/invoice-to-xml/extract
+ * POST /invoice-to-xml/api/extract
  *
  * Accepts a multipart file upload (PDF or image) and returns structured
  * invoice extraction data from the AI provider chain (Gemini → OpenRouter).
  */
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Sign in with Google to process an invoice." }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -37,9 +44,14 @@ export async function POST(request: NextRequest) {
       mimeType: file.type,
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
   } catch (error) {
-    console.error("Extraction error:", error);
+    console.error("Extraction error:", error instanceof Error ? error.name : "UnknownError");
 
     if (error instanceof AIExtractionError) {
       const { code, retryable, retryAfter } = error.toResponse();
@@ -57,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Extraction failed" },
+      { error: "Invoice extraction failed. Please try again." },
       { status: 500 },
     );
   }
