@@ -1,10 +1,17 @@
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { buildAsycudaXml } from "@/lib/asycuda/build-asycuda-xml";
 import { DeclarationDraftSchema } from "@/lib/asycuda/declaration-draft-schema";
 import { hasBlockingErrors, validateDeclaration } from "@/lib/asycuda/validation";
 import type { ExportXmlResponse } from "@/lib/asycuda/types";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Sign in with Google to generate XML." }, { status: 401 });
+  }
+
   try {
     const parsed = DeclarationDraftSchema.safeParse(await request.json());
     if (!parsed.success) {
