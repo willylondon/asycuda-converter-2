@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "Privacy Policy for ASYCUDA Excel Converter. Learn how we handle your data, files, and personal information.",
+    "Privacy Policy for Clearance. Learn how invoice, declaration and account information is handled.",
 };
 
 export default function PrivacyPage() {
@@ -25,20 +25,20 @@ export default function PrivacyPage() {
 
       <h2>1. Information We Collect</h2>
       <p>
-        We collect only the information necessary to provide our conversion service.
-        When you upload an Excel file, we process it in memory to generate ASYCUDA XML.
-        We do <strong>not</strong> store your files, manifests, or generated XML output.
+        We collect and process the information necessary to provide the declaration
+        workflow, including the approved Google account used to sign in and the
+        invoice or declaration information submitted for processing.
       </p>
       <ul>
-        <li>Uploaded Excel files (processed in memory only)</li>
-        <li>Email address (if you contact support)</li>
+        <li>Uploaded commercial invoice files and extracted invoice data</li>
+        <li>Email address and basic profile information used for sign-in</li>
         <li>Payment information (processed by Stripe — we never see your card details)</li>
       </ul>
 
       <h2>2. How We Use Information</h2>
       <p>We use your information solely to:</p>
       <ul>
-        <li>Process your Excel-to-XML conversions</li>
+        <li>Extract and validate invoice and declaration information</li>
         <li>Respond to support inquiries</li>
         <li>Process payments via Stripe</li>
         <li>Improve our conversion engine based on error patterns</li>
@@ -46,9 +46,10 @@ export default function PrivacyPage() {
 
       <h2>3. Data Retention</h2>
       <p>
-        Files uploaded for conversion are processed entirely in memory and deleted
-        immediately after the XML is generated. We do not retain copies of your
-        manifests, Excel files, or XML output on any storage medium.
+        Uploaded files are processed to complete the requested extraction. Users
+        should not assume that browser drafts, service logs or third-party processing
+        records are deleted immediately. Retention controls should be reviewed by the
+        company administrator before using the service with sensitive records.
       </p>
 
       <h2>4. Third-Party Services</h2>
@@ -56,7 +57,8 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Stripe</strong> — for payment processing</li>
         <li><strong>Vercel</strong> — for hosting and deployment</li>
-        <li><strong>Cloudflare</strong> — for CDN and security</li>
+        <li><strong>Google</strong> — for account authentication and invoice extraction</li>
+        <li><strong>OpenRouter</strong> — as a fallback invoice-extraction provider</li>
       </ul>
 
       <h2>5. Security</h2>

@@ -6,7 +6,6 @@ import { Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/invoice-to-xml", label: "How it works" },
-  { href: "/converter", label: "Manifest converter" },
   { href: "/support", label: "Support" },
 ];
 

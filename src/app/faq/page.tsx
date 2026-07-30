@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 export const metadata: Metadata = {
   title: "FAQ",
   description:
-    "Frequently asked questions about ASYCUDA Excel Converter — file formats, security, pricing, and more.",
+    "Frequently asked questions about creating test ASYCUDA XML from commercial invoices.",
 };
 
 const FAQ_DATA = [
@@ -14,24 +14,24 @@ const FAQ_DATA = [
     a: "ASYCUDA (Automated System for Customs Data) is a computerized customs management system developed by UNCTAD. It is used by customs administrations in over 100 countries to process trade data, manifests, and customs declarations electronically.",
   },
   {
-    q: "What Excel format does the converter accept?",
-    a: "We accept .xlsx (Excel 2007+) and .xls (Excel 97-2003) files. Your file must include the required columns for ASYCUDA conversion: Container Number, Bill of Lading, Consignee, Description, Gross Weight, Package Count, Port of Origin, and Port of Destination.",
+    q: "What invoice formats can I upload?",
+    a: "You can upload a commercial invoice as a PDF or image. You can also enter the invoice information manually.",
   },
   {
     q: "How does the conversion work?",
-    a: "Upload your Excel file → our engine validates the structure and data types → you review a validation report → one click to convert → download your ASYCUDA-compliant XML. Average conversion time is under 60 seconds.",
+    a: "Enter the declaration details, upload or manually enter the invoice, review every extracted value and tariff classification, validate the declaration, then preview and download test ASYCUDA XML.",
   },
   {
     q: "Is my data secure?",
-    a: "Yes. All files are processed in memory and deleted immediately after conversion. We use HTTPS encryption for all data transfer. We never store your manifests, Excel files, or generated XML output on our servers.",
+    a: "The application uses HTTPS and requires an approved Google account. Treat commercial invoices and declarations as confidential business records and review all extracted information before export.",
   },
   {
-    q: "What if my Excel file has errors?",
-    a: "Our validation engine checks every row and column before conversion. If it finds issues — missing columns, invalid dates, empty required fields — you'll see a clear validation report telling you exactly what needs to be fixed and where.",
+    q: "What if the invoice has missing or incorrect information?",
+    a: "The validation step identifies missing declaration fields, unresolved tariffs and invalid item values. You can return to the relevant step, correct the information and validate again.",
   },
   {
     q: "Do I need an account?",
-    a: "Not right now. You can convert files immediately without registration. In the future, we'll offer accounts for conversion history, saved templates, and subscription plans.",
+    a: "Yes. Access is restricted to Google accounts approved by the application administrator.",
   },
   {
     q: "What payment methods do you accept?",
@@ -67,8 +67,8 @@ export default function FAQPage() {
         Frequently Asked Questions
       </h1>
       <p className="mt-2 text-lg text-text-muted">
-        Everything you need to know about converting Excel manifests to ASYCUDA
-        XML.
+        Everything you need to know about preparing test ASYCUDA XML from a
+        commercial invoice.
       </p>
 
       <div className="mt-12 space-y-4">

@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "Terms of Service for ASYCUDA Excel Converter. Read the terms governing use of our Excel-to-ASYCUDA XML conversion service.",
+    "Terms governing use of Clearance and its test ASYCUDA XML workflow.",
 };
 
 export default function TermsPage() {
@@ -25,21 +25,22 @@ export default function TermsPage() {
 
       <h2>1. Acceptance of Terms</h2>
       <p>
-        By using the ASYCUDA Excel Converter, you agree to these Terms of Service.
+        By using Clearance, you agree to these Terms of Service.
         If you do not agree, do not use the service.
       </p>
 
       <h2>2. Service Description</h2>
       <p>
-        ASYCUDA Excel Converter is a web-based tool that converts Excel delivery
-        manifest files into ASYCUDA-compliant XML format for customs submission.
+        Clearance is a web-based tool for reviewing commercial invoice and
+        declaration data, verifying tariff classifications, and generating test
+        ASYCUDA XML for further review.
       </p>
 
       <h2>3. User Responsibilities</h2>
       <p>You are responsible for:</p>
       <ul>
-        <li>Ensuring your Excel files contain accurate and complete data</li>
-        <li>Verifying the generated XML output before submission to customs</li>
+        <li>Ensuring invoice and declaration information is accurate and complete</li>
+        <li>Verifying generated XML before attempting to use it with customs systems</li>
         <li>Complying with all applicable customs regulations and laws</li>
       </ul>
 
@@ -52,7 +53,7 @@ export default function TermsPage() {
 
       <h2>5. Limitation of Liability</h2>
       <p>
-        ASYCUDA Excel Converter is provided &quot;as is&quot; without warranty. We are not
+        Clearance is provided &quot;as is&quot; without warranty. We are not
         liable for customs rejections, delays, penalties, or damages resulting from
         use of our service. Always verify the XML output before submission.
       </p>

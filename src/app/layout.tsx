@@ -12,20 +12,19 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://asycuda-converter.vercel.app"
+    process.env.NEXT_PUBLIC_SITE_URL || "https://asycuda-converter-2.vercel.app"
   ),
   title: {
-    default: "ASYCUDA Excel Converter — Excel Manifests to Customs XML",
-    template: "%s | ASYCUDA Excel Converter",
+    default: "Clearance — Invoice to ASYCUDA XML",
+    template: "%s | Clearance",
   },
   description:
-    "Convert Excel delivery manifests into ASYCUDA-compliant XML files in minutes. Validate, convert, and download customs-ready XML without manual formatting.",
+    "Review commercial invoice data, verify Jamaican tariff codes and generate test ASYCUDA XML.",
   keywords: [
     "ASYCUDA",
-    "Excel converter",
+    "invoice extraction",
     "customs XML",
-    "manifest converter",
-    "delivery manifest",
+    "Jamaica tariff",
     "customs declaration",
     "XML generator",
   ],
@@ -35,25 +34,25 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://asycuda-converter.vercel.app",
-    siteName: "ASYCUDA Excel Converter",
-    title: "Convert Excel Manifests to ASYCUDA XML",
+    url: "https://asycuda-converter-2.vercel.app",
+    siteName: "Clearance",
+    title: "Review Invoices and Generate Test ASYCUDA XML",
     description:
-      "Validate, convert, and download customs-ready XML files without manual formatting.",
+      "Prepare declaration data, verify Jamaican tariff codes and export test ASYCUDA XML.",
     images: [
       {
         url: "/images/og-image.png",
         width: 1200,
         height: 630,
-        alt: "ASYCUDA Excel Converter",
+        alt: "Clearance",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Convert Excel Manifests to ASYCUDA XML",
+    title: "Review Invoices and Generate Test ASYCUDA XML",
     description:
-      "Validate, convert, and download customs-ready XML files without manual formatting.",
+      "Prepare declaration data, verify Jamaican tariff codes and export test ASYCUDA XML.",
     images: ["/images/og-image.png"],
   },
   robots: {

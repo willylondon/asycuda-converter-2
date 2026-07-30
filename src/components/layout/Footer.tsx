@@ -5,7 +5,6 @@ const FOOTER_LINKS = {
   Product: [
     { href: "/invoice-to-xml/new", label: "New declaration" },
     { href: "/invoice-to-xml", label: "How it works" },
-    { href: "/converter", label: "Manifest converter" },
   ],
   Company: [
     { href: "/support", label: "Support" },

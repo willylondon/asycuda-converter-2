@@ -1,7 +1,7 @@
 {
-  "name": "ASYCUDA Excel Converter",
-  "short_name": "ASYCUDA Converter",
-  "description": "Convert Excel delivery manifests into ASYCUDA-compliant XML files",
+  "name": "Clearance",
+  "short_name": "Clearance",
+  "description": "Review invoice data and generate test ASYCUDA XML",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8FAFC",

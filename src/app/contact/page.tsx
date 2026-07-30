@@ -6,7 +6,7 @@ import { SupportForm } from "@/components/support/SupportForm";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Contact the ASYCUDA Excel Converter team. Get in touch for support, enterprise pricing, or partnership inquiries.",
+    "Contact the Clearance team for support or business inquiries.",
 };
 
 const CONTACT_CARDS = [

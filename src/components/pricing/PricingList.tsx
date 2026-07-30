@@ -24,12 +24,12 @@ export function PricingList() {
         }
       }
 
-      // If response is not ok or no url, fall back to /converter
-      console.warn("WiPay checkout initiation failed. Falling back to converter.");
-      window.location.href = "/converter";
+      // If response is not ok or no URL, return to the declaration workspace.
+      console.warn("WiPay checkout initiation failed. Returning to declaration workspace.");
+      window.location.href = "/invoice-to-xml/new";
     } catch (err) {
-      console.error("WiPay checkout error. Falling back to converter:", err);
-      window.location.href = "/converter";
+      console.error("WiPay checkout error. Returning to declaration workspace:", err);
+      window.location.href = "/invoice-to-xml/new";
     } finally {
       setLoadingPlan(null);
     }

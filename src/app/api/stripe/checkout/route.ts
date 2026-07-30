@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/converter?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/converter?cancelled=true`,
+      success_url: `${origin}/invoice-to-xml/new?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/invoice-to-xml/new?cancelled=true`,
       metadata: {
         fileName: fileName || "unknown",
       },

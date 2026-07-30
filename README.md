@@ -1,9 +1,6 @@
 # ASYCUDA Converter 2
 
-A Next.js application with two customs-document workflows:
-
-1. Convert supported Excel manifests into XML.
-2. Extract commercial invoices, review declaration data, verify Jamaican tariff codes and generate test ASYCUDA XML for import verification.
+A Next.js application that extracts commercial invoices, supports declaration review, verifies Jamaican tariff codes and generates test ASYCUDA XML for import verification.
 
 > The Invoice-to-ASYCUDA module produces **test ASYCUDA XML**. Import compatibility has not yet been confirmed inside a live Jamaica Customs ASYCUDA declaration. Do not describe the output as certified, customs-approved or guaranteed to import.
 

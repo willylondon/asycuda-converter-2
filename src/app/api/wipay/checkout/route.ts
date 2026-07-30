@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Generate a unique order ID
     const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    const responseUrl = `${origin}/converter`;
+    const responseUrl = `${origin}/invoice-to-xml/new`;
 
     const formData = new URLSearchParams();
     formData.append("account_number", wipayAccountNumber);
